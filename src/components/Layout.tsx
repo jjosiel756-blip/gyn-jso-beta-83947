@@ -12,8 +12,8 @@ export function Layout({ children }: LayoutProps) {
       <div className="min-h-screen bg-background transition-colors duration-300">
         <Navbar />
         
-        {/* Theme selector no canto superior direito apenas em mobile */}
-        <div className="fixed top-4 right-4 z-50 md:hidden">
+        {/* Theme selector no canto superior direito */}
+        <div className="fixed top-4 right-4 z-50">
           <ThemeSelector />
         </div>
         

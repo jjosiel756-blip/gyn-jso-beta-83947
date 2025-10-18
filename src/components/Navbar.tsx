@@ -81,10 +81,6 @@ export function Navbar() {
             <span className="text-[10px] md:text-sm leading-tight">Sair</span>
           </Button>
         </div>
-
-        <div className="hidden md:block">
-          <ThemeSelector />
-        </div>
       </div>
     </nav>
   );
