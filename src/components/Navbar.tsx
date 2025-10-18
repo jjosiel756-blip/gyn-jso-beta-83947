@@ -71,6 +71,10 @@ export function Navbar() {
             );
           })}
           
+          <div className="md:hidden">
+            <ThemeSelector />
+          </div>
+          
           <Button
             variant="ghost"
             size="sm"
