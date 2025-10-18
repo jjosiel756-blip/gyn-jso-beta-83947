@@ -7,6 +7,7 @@ import { Camera, Upload, Utensils, Target, Zap, Plus, Clock, TrendingUp, X } fro
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import NutriAI from "@/components/NutriAI";
 
 const todayMeals = [
   {
@@ -713,6 +714,7 @@ const Nutrition = () => {
           </div>
         )}
       </div>
+      <NutriAI />
     </Layout>
   );
 };
