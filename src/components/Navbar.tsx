@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ThemeSelector } from "@/components/ThemeSelector";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Treinos", href: "/workouts", icon: Dumbbell },
   { name: "Nutrição", href: "/nutrition", icon: Apple },
   { name: "Progresso", href: "/progress", icon: BarChart3 },
