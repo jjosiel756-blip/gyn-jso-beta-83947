@@ -11,11 +11,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMotivationalMessage } from "@/hooks/useMotivationalMessage";
+import { useTypingEffect } from "@/hooks/useTypingEffect";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [userName, setUserName] = useState<string>('');
   const { currentMessage, showPopup, setShowPopup, handleMessageClick } = useMotivationalMessage();
+  const { displayedText, isTyping } = useTypingEffect(currentMessage.short, 40);
   
   useEffect(() => {
     const loadUserName = async () => {
@@ -67,12 +69,12 @@ const Dashboard = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex-1">
             <h1 className="text-3xl font-bold">Olá, {userName}! 👋</h1>
-            <p className="text-muted-foreground">Vamos manter o foco nos seus objetivos hoje</p>
             <p 
-              className="motivational-text text-sm font-medium text-primary mt-2 cursor-pointer hover:underline transition-all"
+              className="motivational-text text-base font-medium text-primary mt-3 cursor-pointer hover:underline transition-all"
               onClick={handleMessageClick}
             >
-              {currentMessage.short}
+              {displayedText}
+              {isTyping && <span className="animate-pulse">|</span>}
             </p>
           </div>
           <div className="flex gap-2">
