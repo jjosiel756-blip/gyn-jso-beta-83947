@@ -49,6 +49,10 @@ export function Navbar() {
           </span>
         </div>
         
+        <div className="hidden md:block absolute right-4">
+          <ThemeSelector />
+        </div>
+        
         <div className="flex justify-between items-center w-full md:w-auto md:justify-start md:gap-2">
           {navigation.map((item) => {
             const isActive = location.pathname === item.href;
