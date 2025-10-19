@@ -71,7 +71,7 @@ const Dashboard = () => {
                 <ThemeSelector />
               </div>
             </div>
-            <p className="text-muted-foreground motivational-text">{motivationalMessage}</p>
+            <p className="motivational-text text-primary font-medium">{motivationalMessage}</p>
           </div>
           <div className="flex gap-2">
             <Link to="/workouts">
