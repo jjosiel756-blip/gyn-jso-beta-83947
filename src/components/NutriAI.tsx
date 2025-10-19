@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const NutriAI = () => {
   const { user } = useAuth();
@@ -7,6 +8,7 @@ const NutriAI = () => {
   const [isListening, setIsListening] = useState(false);
   const [conversation, setConversation] = useState<Array<{type: string; text: string; timestamp: Date}>>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [profileName, setProfileName] = useState<string>('');
   const recognitionRef = useRef<any>(null);
   const conversationContext = useRef({
     lastTopic: '',
@@ -15,22 +17,32 @@ const NutriAI = () => {
     userGender: 'male' // Default
   });
 
-  // ✅ EXTRAIR PRIMEIRO NOME
-  const getFirstName = (nameOrEmail: string | undefined) => {
-    if (!nameOrEmail) return 'Amigo';
+  // ✅ BUSCAR NOME DO PERFIL DO USUÁRIO
+  useEffect(() => {
+    const fetchProfileName = async () => {
+      if (!user?.id) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data?.name) {
+        setProfileName(data.name);
+      }
+    };
     
-    // Se contém @, é um email - extrair a parte antes do @
-    if (nameOrEmail.includes('@')) {
-      const emailPrefix = nameOrEmail.split('@')[0];
-      // Capitalizar primeira letra
-      return emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1).toLowerCase();
-    }
-    
-    // Se é um nome, pegar só o primeiro nome
-    return nameOrEmail.split(' ')[0];
+    fetchProfileName();
+  }, [user]);
+
+  // ✅ EXTRAIR PRIMEIRO NOME DO PERFIL
+  const getFirstName = (fullName: string) => {
+    if (!fullName) return 'Amigo';
+    return fullName.split(' ')[0];
   };
 
-  const firstName = getFirstName(user?.user_metadata?.name || user?.email);
+  const firstName = getFirstName(profileName);
 
   // ✅ CONFIGURAÇÃO DE VOZ POR GÊNERO
   const getVoiceSettings = () => {
