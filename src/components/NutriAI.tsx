@@ -301,44 +301,44 @@ const NutriAI = () => {
       {!isActive && (
         <button 
           onClick={activateNutriAI}
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-5 rounded-full shadow-2xl hover:scale-110 transition-transform z-50"
+          className="fixed bottom-20 right-4 md:bottom-6 md:right-6 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-3 rounded-full shadow-lg hover:scale-105 transition-transform z-50"
         >
-          <span className="flex items-center gap-2 text-lg font-semibold">
+          <span className="flex items-center gap-1.5 text-sm md:text-base font-semibold">
             🧠 NutriAI
           </span>
         </button>
       )}
 
       {isActive && (
-        <div className="fixed bottom-6 right-6 w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-green-200 dark:border-green-800 z-50">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-t-2xl">
+        <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 w-[90vw] max-w-sm md:w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-green-200 dark:border-green-800 z-50">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-3 rounded-t-2xl">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-bold text-lg">NutriAI - {firstName}</h3>
-                <p className="text-sm opacity-90">
+                <h3 className="font-bold text-base">NutriAI - {firstName}</h3>
+                <p className="text-xs opacity-90">
                   {conversationContext.current.userGender === 'male' ? 'Nutricionista Masculino' : 'Nutricionista Feminina'}
                 </p>
               </div>
               <button 
                 onClick={deactivateNutriAI}
-                className="text-white hover:text-green-200 text-lg bg-green-600 hover:bg-green-700 w-8 h-8 rounded-full flex items-center justify-center"
+                className="text-white hover:text-green-200 text-base bg-green-600 hover:bg-green-700 w-7 h-7 rounded-full flex items-center justify-center"
               >
                 ✕
               </button>
             </div>
           </div>
           
-          <div className="h-80 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-950">
+          <div className="h-60 md:h-72 p-3 overflow-y-auto bg-gray-50 dark:bg-gray-950">
             {conversation.map((msg, index) => (
-              <div key={index} className={`mb-4 ${msg.type === 'user' ? 'text-right' : 'text-left'}`}>
-                <div className={`inline-block max-w-[85%] p-3 rounded-2xl ${
+              <div key={index} className={`mb-3 ${msg.type === 'user' ? 'text-right' : 'text-left'}`}>
+                <div className={`inline-block max-w-[85%] p-2 rounded-xl text-sm ${
                   msg.type === 'user' 
                     ? 'bg-blue-500 text-white rounded-br-none' 
                     : 'bg-green-100 dark:bg-green-900 text-gray-800 dark:text-gray-100 rounded-bl-none border border-green-200 dark:border-green-700'
                 }`}>
                   {msg.text}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                   {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
