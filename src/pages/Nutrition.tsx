@@ -1,11 +1,15 @@
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus, Camera } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 const Nutrition = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [userName, setUserName] = useState("Josiel");
 
   useEffect(() => {
@@ -33,6 +37,7 @@ const Nutrition = () => {
 
   const stats = [
     { value: "+15%", label: "Desempenho" },
+    { value: "+5%", label: "Força" },
     { value: "420", label: "Calorias Queimadas" },
     { value: "1.8L", label: "Água Consumida" },
     { value: "+12%", label: "Progresso" }
@@ -53,6 +58,26 @@ const Nutrition = () => {
             Foco no processo, os resultados virão! 😊
           </p>
         </Card>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+          <Button 
+            onClick={() => navigate('/workouts')}
+            className="gradient-fitness text-white font-bold px-6 py-6 rounded-full shadow-fitness hover:opacity-90 transition-all hover:-translate-y-1"
+            size="lg"
+          >
+            <Plus className="w-5 h-5" />
+            Novo Treino
+          </Button>
+          <Button 
+            onClick={() => {/* TODO: Add camera functionality */}}
+            className="gradient-nutrition text-white font-bold px-6 py-6 rounded-full shadow-nutrition hover:opacity-90 transition-all hover:-translate-y-1"
+            size="lg"
+          >
+            <Camera className="w-5 h-5" />
+            Analisar Refeição
+          </Button>
+        </div>
 
         {/* Content Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -118,7 +143,7 @@ const Nutrition = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="p-6 text-center shadow-lg">
               <div className="text-3xl font-bold mb-2" style={{ color: 'hsl(var(--primary))' }}>
