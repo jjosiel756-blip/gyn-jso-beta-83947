@@ -9,12 +9,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { ThemeSelector } from "@/components/ThemeSelector";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMotivationalMessage } from "@/hooks/useMotivationalMessage";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [userName, setUserName] = useState<string>('');
-  const motivationalMessage = useMotivationalMessage();
   
   useEffect(() => {
     const loadUserName = async () => {
@@ -72,7 +70,6 @@ const Dashboard = () => {
               </div>
             </div>
             <p className="text-muted-foreground">Vamos manter o foco nos seus objetivos hoje</p>
-            <p className="motivational-text text-sm font-medium text-primary mt-2">{motivationalMessage}</p>
           </div>
           <div className="flex gap-2">
             <Link to="/workouts">
