@@ -9,6 +9,8 @@ const NutriAI = () => {
   const [conversation, setConversation] = useState<Array<{type: string; text: string; timestamp: Date}>>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [profileName, setProfileName] = useState<string>('');
+  const [userName, setUserName] = useState<string>('');
+  const [conversationStage, setConversationStage] = useState<'start' | 'main'>('start');
   const recognitionRef = useRef<any>(null);
   const conversationContext = useRef({
     lastTopic: '',
@@ -164,12 +166,32 @@ const NutriAI = () => {
     });
   };
 
-  // ✅ ATIVAÇÃO COM SAUDAÇÃO PERSONALIZADA
+  // ✅ EXTRAIR NOME DA FALA DO USUÁRIO
+  const extractName = (userText: string): string | null => {
+    const text = userText.toLowerCase().trim();
+    
+    // Remover saudações e palavras comuns
+    const cleanText = text
+      .replace(/meu nome é|eu sou|me chamo|sou o|sou a/gi, '')
+      .replace(/oi|olá|ola|hey/gi, '')
+      .trim();
+    
+    // Pegar primeira palavra como nome
+    const words = cleanText.split(' ');
+    return words[0] ? words[0].charAt(0).toUpperCase() + words[0].slice(1) : null;
+  };
+
+  // ✅ ATIVAÇÃO COM SAUDAÇÃO PERSONALIZADA E HUMOR
   const activateNutriAI = async () => {
     setIsActive(true);
+    setConversationStage('start');
     
-    // ✅ SAUDAÇÃO EXATA SOLICITADA
-    const welcomeText = `Oi, eu sou seu NutriAI me chamo ${firstName}, e vamos focar na sua alimentação e nutrição. No que posso te ajudar hoje?`;
+    let welcomeText = '';
+    if (firstName && firstName !== 'Amigo') {
+      welcomeText = `Oi, eu sou seu NutriAI me chamo ${firstName}, e vamos focar na sua alimentação e nutrição. Aliás, como você se chama?`;
+    } else {
+      welcomeText = `Oi, eu sou seu NutriAI! Vamos focar na sua alimentação e nutrição. Primeiro, como você se chama?`;
+    }
     
     setConversation([{
       type: 'ai', 
@@ -179,7 +201,7 @@ const NutriAI = () => {
     
     await speakText(welcomeText);
     
-    // ✅ INICIAR OUVIR AUTOMATICAMENTE APÓS SAUDAÇÃO
+    // ✅ INICIAR OUVIR PARA O NOME DO USUÁRIO
     if (recognitionRef.current) {
       setTimeout(() => {
         try {
@@ -203,59 +225,31 @@ const NutriAI = () => {
     setConversation([]);
   };
 
-  // ✅ IA CONVERSACIONAL MELHORADA
-  const generateHumanResponse = (userMessage: string, context: any) => {
+  // ✅ GERAR RESPOSTAS NUTRICIONAIS COM HUMOR
+  const generateNutritionResponse = (userMessage: string, speakerName: string) => {
     const lowerMessage = userMessage.toLowerCase();
     
-    // Detectar gênero do usuário pelo nome (simplificado)
-    const maleNames = ['carlos', 'joão', 'pedro', 'marcos', 'lucas', 'josiel'];
-    const femaleNames = ['ana', 'maria', 'julia', 'carla', 'patricia', 'fernanda'];
+    const responses: Record<string, string> = {
+      'ensopado': `${speakerName}, ensopado de carne é minha paixão! Dica: use carne magra e muitos legumes. Quer a receita completa?`,
+      'carne': `${speakerName}, ensopado de carne é minha paixão! Dica: use carne magra e muitos legumes. Quer a receita completa?`,
+      'emagrecer': `Haha ${speakerName}, quer emagrecer? Vamos fazer isso com saúde! Corta os industrializados e foca nos alimentos naturais. Topa?`,
+      'perder peso': `Haha ${speakerName}, quer emagrecer? Vamos fazer isso com saúde! Corta os industrializados e foca nos alimentos naturais. Topa?`,
+      'proteína': `Proteína ${speakerName}? É o que há! Frango, ovos, whey... quer saber quanto você precisa por dia?`,
+      'musculação': `Proteína ${speakerName}? É o que há! Frango, ovos, whey... quer saber quanto você precisa por dia?`,
+      'frango': `Frango ${speakerName}? Clássico dos marombas! Grelhado é a melhor opção. Posso dar umas dicas de tempero?`,
+      'água': `${speakerName}, água é vida! Bebe uns 2 litros por dia que seu corpo agradece. Trust me!`,
+      'salada': `Salada ${speakerName}? Amo! Mistura cores e texturas para ficar top. Tem alguma folha favorita?`,
+      'obrigado': `De nada ${speakerName}! Tamo junto nessa jornada nutricional!`,
+      'obrigada': `De nada ${speakerName}! Tamo junto nessa jornada nutricional!`
+    };
+
+    for (const [key, response] of Object.entries(responses)) {
+      if (lowerMessage.includes(key)) {
+        return response;
+      }
+    }
     
-    if (!context.userGender && firstName) {
-      const isMaleName = maleNames.includes(firstName.toLowerCase());
-      const isFemaleName = femaleNames.includes(firstName.toLowerCase());
-      
-      if (isMaleName) context.userGender = 'male';
-      else if (isFemaleName) context.userGender = 'female';
-    }
-
-    // Respostas contextuais melhoradas
-    if (lowerMessage.includes('ensopado') || lowerMessage.includes('carne') || lowerMessage.includes('receita')) {
-      context.lastTopic = 'receitas';
-      return `Perfeito ${firstName}! Ensopado de carne é uma ótima opção. Para deixar mais saudável, use carne magra e muitos legumes. Quer que eu detalhe os ingredientes e o preparo?`;
-    }
-
-    if (lowerMessage.includes('emagrecer') || lowerMessage.includes('perder peso')) {
-      context.lastTopic = 'emagrecimento';
-      return `Entendo ${firstName}! Emagrecer de forma saudável é um ótimo objetivo. Vamos criar um plano que se adapte à sua rotina. Me conta um pouco sobre seus hábitos atuais...`;
-    }
-
-    if (lowerMessage.includes('proteína') || lowerMessage.includes('musculação')) {
-      context.lastTopic = 'proteínas';
-      return `Certo ${firstName}! Proteínas são essenciais para seus músculos. Posso te ajudar a calcular suas necessidades e sugerir as melhores fontes. Tem preferência por proteínas animais ou vegetais?`;
-    }
-
-    if (lowerMessage.includes('frango') || lowerMessage.includes('peito de frango')) {
-      return `Ótima escolha ${firstName}! O peito de frango é excelente. Rico em proteína e versátil. Como você costuma preparar? Posso dar dicas para variar o sabor!`;
-    }
-
-    if (lowerMessage.includes('salada') || lowerMessage.includes('folhas')) {
-      return `Adoro saladas ${firstName}! Para deixar mais nutritiva, sugiro misturar cores e texturas. Tem alguma verdura preferida ou que não gosta?`;
-    }
-
-    if (lowerMessage.includes('obrigado') || lowerMessage.includes('obrigada')) {
-      return `De nada ${firstName}! Fico feliz em ajudar. Estou aqui sempre que precisar de orientação nutricional!`;
-    }
-
-    // Resposta conversacional personalizada
-    const conversationalResponses = [
-      `Interessante ${firstName}! Sobre isso, posso te orientar de forma prática. O que especificamente gostaria de saber?`,
-      `Entendi ${firstName}! Vamos explorar juntos como isso pode melhorar sua alimentação. Tem alguma dúvida em particular?`,
-      `Certo ${firstName}! Posso te ajudar a incorporar isso na sua rotina de forma equilibrada. Me conta mais...`,
-      `Perfeito ${firstName}! Esse é um ótimo ponto de partida. Como posso te auxiliar com isso?`
-    ];
-
-    return conversationalResponses[Math.floor(Math.random() * conversationalResponses.length)];
+    return `Interessante ${speakerName}! Sobre nutrição, posso te ajudar com receitas, cálculos ou dicas. O que te interessa?`;
   };
 
   const handleUserMessage = async (userText: string) => {
@@ -268,8 +262,29 @@ const NutriAI = () => {
     };
     setConversation(prev => [...prev, userMessage]);
 
-    // ✅ RESPOSTA INTELIGENTE
-    const aiResponse = generateHumanResponse(userText, conversationContext.current);
+    let aiResponse = '';
+
+    // ✅ FASE 1: CAPTURAR NOME DO USUÁRIO
+    if (conversationStage === 'start') {
+      const detectedName = extractName(userText);
+      if (detectedName) {
+        setUserName(detectedName);
+        setConversationStage('main');
+        
+        // ✅ RESPOSTA COM HUMOR SE FOR O MESMO NOME
+        if (firstName && firstName !== 'Amigo' && firstName.toLowerCase() === detectedName.toLowerCase()) {
+          aiResponse = `Ah meu chará! Também me chamo ${detectedName}! Que coincidência fantástica! Então ${detectedName}, vamos ao que importa? O que você deseja saber sobre nutrição?`;
+        } else {
+          aiResponse = `Prazer, ${detectedName}! Que nome bonito! Então vamos ao que importa? O que você deseja saber sobre alimentação e nutrição?`;
+        }
+      } else {
+        aiResponse = `Desculpe, não entendi seu nome. Pode repetir? Como você se chama?`;
+      }
+    }
+    // ✅ FASE 2: CONVERSA PRINCIPAL
+    else {
+      aiResponse = generateNutritionResponse(userText, userName || 'amigo');
+    }
     
     const aiMessage = { 
       type: 'ai', 
