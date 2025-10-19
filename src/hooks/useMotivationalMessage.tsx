@@ -14,16 +14,35 @@ const motivationalMessages = [
 ];
 
 export const useMotivationalMessage = () => {
-  const [message, setMessage] = useState(motivationalMessages[0]);
+  const [displayedMessage, setDisplayedMessage] = useState("");
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(true);
   
   useEffect(() => {
-    const interval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * motivationalMessages.length);
-      setMessage(motivationalMessages[randomIndex]);
-    }, 60000); // 1 minuto
+    const fullMessage = motivationalMessages[currentMessageIndex];
+    let currentIndex = 0;
+    setIsTyping(true);
+    setDisplayedMessage("");
     
-    return () => clearInterval(interval);
-  }, []);
+    const typingInterval = setInterval(() => {
+      if (currentIndex < fullMessage.length) {
+        setDisplayedMessage(fullMessage.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        setIsTyping(false);
+        clearInterval(typingInterval);
+      }
+    }, 50); // Velocidade de digitação (50ms por caractere)
+    
+    const changeMessageTimeout = setTimeout(() => {
+      setCurrentMessageIndex((prev) => (prev + 1) % motivationalMessages.length);
+    }, 60000); // Muda a mensagem a cada 60 segundos
+    
+    return () => {
+      clearInterval(typingInterval);
+      clearTimeout(changeMessageTimeout);
+    };
+  }, [currentMessageIndex]);
   
-  return message;
+  return displayedMessage;
 };
