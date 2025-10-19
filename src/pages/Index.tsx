@@ -8,7 +8,6 @@ import heroImage from "@/assets/hero-fitness.jpg";
 import nutritionImage from "@/assets/nutrition-hero.jpg";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
-import { ThemeSelector } from "@/components/ThemeSelector";
 
 const Index = () => {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -30,9 +29,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative">
-      <ThemeSelector />
-      
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div 
