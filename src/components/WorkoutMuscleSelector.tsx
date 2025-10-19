@@ -197,6 +197,46 @@ export function WorkoutMuscleSelector() {
     }));
   };
 
+  // Adicionar novo label
+  const addNewLabel = () => {
+    const newLabel: MuscleLabel = {
+      id: Date.now(),
+      name: "Novo Label",
+      x: 50,
+      y: 50,
+      width: 70,
+      height: 24,
+      rotation: 0,
+      color: currentView === 'front' ? "#1EAEDB" : "#9b87f5",
+      textColor: "#ffffff",
+      fontSize: 12,
+      fontFamily: "Inter"
+    };
+    
+    setMuscleLabels(prev => ({
+      ...prev,
+      [currentView]: [...prev[currentView], newLabel]
+    }));
+    
+    setSelectedLabel(newLabel.id);
+    toast.success('Novo label adicionado');
+  };
+
+  // Excluir label
+  const deleteLabel = (labelId: number) => {
+    setMuscleLabels(prev => ({
+      ...prev,
+      [currentView]: prev[currentView].filter(label => label.id !== labelId)
+    }));
+    
+    // Remover conectores associados
+    setConnectors(prev => prev.filter(conn => conn.fromLabelId !== labelId));
+    
+    setSelectedLabel(null);
+    toast.success('Label excluído');
+    saveToLocalStorage();
+  };
+
   // Adicionar linha conectora
   const addConnector = () => {
     if (!selectedLabel) {
@@ -457,20 +497,49 @@ export function WorkoutMuscleSelector() {
         </div>
 
         {/* Painel de Edição */}
-        {editMode && selectedLabelData && (
+        {editMode && (
           <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Editar Label</h3>
+            {/* Botões de Ação Principais */}
+            <Card className="mb-4">
+              <CardContent className="p-4">
+                <div className="space-y-2">
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedLabel(null)}
+                    onClick={addNewLabel}
+                    className="w-full gap-2"
+                    variant="default"
                   >
-                    ✕
+                    <Plus size={16} />
+                    Adicionar Novo Label
                   </Button>
+                  
+                  {selectedLabel && (
+                    <Button
+                      onClick={() => deleteLabel(selectedLabel)}
+                      className="w-full gap-2"
+                      variant="destructive"
+                    >
+                      <Trash2 size={16} />
+                      Excluir Label Selecionado
+                    </Button>
+                  )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Painel de Edição do Label Selecionado */}
+            {selectedLabelData && (
+              <Card>
+                <CardContent className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Editar Label</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedLabel(null)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
 
                 <div className="space-y-3">
                   <div>
@@ -552,16 +621,17 @@ export function WorkoutMuscleSelector() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={addConnector}
-                  className="w-full gap-2"
-                  variant="outline"
-                >
-                  <Plus size={16} />
-                  Adicionar Linha Conectora
-                </Button>
-              </CardContent>
-            </Card>
+                  <Button
+                    onClick={addConnector}
+                    className="w-full gap-2"
+                    variant="outline"
+                  >
+                    <Plus size={16} />
+                    Adicionar Linha Conectora
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Controles Gerais */}
             <Card className="mt-4">
