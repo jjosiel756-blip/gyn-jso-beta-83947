@@ -40,16 +40,13 @@ export function Navbar() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-border/20 md:top-0 md:bottom-auto md:border-b md:border-t-0 safe-area-bottom">
       <div className="flex justify-around items-center px-4 py-3 md:max-w-7xl md:mx-auto md:justify-between md:gap-8">
-        <div className="hidden md:flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-hero rounded-lg flex items-center justify-center">
-              <Dumbbell className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-hero bg-clip-text text-transparent whitespace-nowrap">
-              GymJM
-            </span>
+        <div className="hidden md:flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-hero rounded-lg flex items-center justify-center">
+            <Dumbbell className="w-5 h-5 text-white" />
           </div>
-          <ThemeSelector />
+          <span className="text-xl font-bold bg-gradient-hero bg-clip-text text-transparent whitespace-nowrap">
+            GymJM
+          </span>
         </div>
         
         <div className="flex justify-between items-center w-full md:w-auto md:justify-start md:gap-2">
@@ -73,10 +70,6 @@ export function Navbar() {
               </Link>
             );
           })}
-          
-          <div className="md:hidden">
-            <ThemeSelector />
-          </div>
           
           <Button
             variant="ghost"
