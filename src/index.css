@@ -277,3 +277,10 @@ All colors MUST be HSL.
     user-select: none;
   }
 }
+
+@layer components {
+  .motivational-text {
+    transition: opacity 0.5s ease-in-out;
+    min-height: 24px;
+  }
+}
