@@ -16,8 +16,18 @@ const NutriAI = () => {
   });
 
   // ✅ EXTRAIR PRIMEIRO NOME
-  const getFirstName = (fullName: string | undefined) => {
-    return fullName ? fullName.split(' ')[0] : 'Amigo';
+  const getFirstName = (nameOrEmail: string | undefined) => {
+    if (!nameOrEmail) return 'Amigo';
+    
+    // Se contém @, é um email - extrair a parte antes do @
+    if (nameOrEmail.includes('@')) {
+      const emailPrefix = nameOrEmail.split('@')[0];
+      // Capitalizar primeira letra
+      return emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1).toLowerCase();
+    }
+    
+    // Se é um nome, pegar só o primeiro nome
+    return nameOrEmail.split(' ')[0];
   };
 
   const firstName = getFirstName(user?.user_metadata?.name || user?.email);
