@@ -55,7 +55,8 @@ export const useMotivationalMessage = () => {
     }, 50); // Velocidade de digitação (50ms por caractere)
     
     const changeMessageTimeout = setTimeout(() => {
-      setCurrentMessageIndex((prev) => (prev + 1) % motivationalMessages.length);
+      const randomIndex = Math.floor(Math.random() * motivationalMessages.length);
+      setCurrentMessageIndex(randomIndex);
     }, 60000); // Muda a mensagem a cada 60 segundos
     
     return () => {
