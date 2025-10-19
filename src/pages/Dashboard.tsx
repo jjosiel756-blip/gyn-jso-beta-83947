@@ -3,16 +3,19 @@ import { StatCard } from "@/components/StatCard";
 import { GymCard } from "@/components/GymCard";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Target, Flame, Droplets, Zap, Plus, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { ThemeSelector } from "@/components/ThemeSelector";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useMotivationalMessage } from "@/hooks/useMotivationalMessage";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [userName, setUserName] = useState<string>('');
+  const { currentMessage, showPopup, setShowPopup, handleMessageClick } = useMotivationalMessage();
   
   useEffect(() => {
     const loadUserName = async () => {
@@ -63,13 +66,14 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <h1 className="text-3xl font-bold">Olá, {userName}! 👋</h1>
-              <div className="md:hidden">
-                <ThemeSelector />
-              </div>
-            </div>
+            <h1 className="text-3xl font-bold">Olá, {userName}! 👋</h1>
             <p className="text-muted-foreground">Vamos manter o foco nos seus objetivos hoje</p>
+            <p 
+              className="motivational-text text-sm font-medium text-primary mt-2 cursor-pointer hover:underline transition-all"
+              onClick={handleMessageClick}
+            >
+              {currentMessage.short}
+            </p>
           </div>
           <div className="flex gap-2">
             <Link to="/workouts">
@@ -219,6 +223,23 @@ const Dashboard = () => {
             </div>
           </div>
         </GymCard>
+
+        {/* Popup de Informações Detalhadas */}
+        <Dialog open={showPopup} onOpenChange={setShowPopup}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                💡 Saiba Mais
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed">{currentMessage.full}</p>
+              <Badge variant="secondary" className="capitalize">
+                {currentMessage.category}
+              </Badge>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
