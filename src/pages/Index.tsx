@@ -6,6 +6,7 @@ import { Dumbbell, Apple, TrendingUp, Zap, Camera, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-fitness.jpg";
 import nutritionImage from "@/assets/nutrition-hero.jpg";
+import workoutsImage from "@/assets/workouts-hero.jpg";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -89,6 +90,10 @@ const Index = () => {
               description="Rotinas personalizadas baseadas em seus objetivos"
               className="p-8"
             >
+              <div 
+                className="h-32 bg-cover bg-center rounded-lg mb-4"
+                style={{ backgroundImage: `url(${workoutsImage})` }}
+              />
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Dumbbell className="w-6 h-6 text-primary" />
