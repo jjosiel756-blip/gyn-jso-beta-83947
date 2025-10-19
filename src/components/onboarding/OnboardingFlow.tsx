@@ -16,7 +16,6 @@ import Step9 from "./steps/Step9";
 import Step10 from "./steps/Step10";
 import Step11 from "./steps/Step11";
 import Step12 from "./steps/Step12";
-import Step13 from "./steps/Step13";
 
 export interface OnboardingData {
   authMethod?: 'google' | 'facebook' | 'email' | 'guest';
@@ -44,7 +43,7 @@ const OnboardingFlow = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const totalSteps = 13;
+  const totalSteps = 12;
 
   const updateData = (newData: Partial<OnboardingData>) => {
     setData(prev => ({ ...prev, ...newData }));
@@ -146,7 +145,6 @@ const OnboardingFlow = () => {
       case 10: return <Step10 {...stepProps} />;
       case 11: return <Step11 {...stepProps} />;
       case 12: return <Step12 {...stepProps} />;
-      case 13: return <Step13 {...stepProps} />;
       default: return <Step1 {...stepProps} />;
     }
   };

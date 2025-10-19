@@ -14,7 +14,7 @@ const Step10 = ({ nextStep, prevStep }: StepProps) => {
     <div className="w-full max-w-md mx-auto space-y-6 animate-fade-in text-center">
       <div className="space-y-4">
         <Smartphone className="w-16 h-16 mx-auto text-primary" />
-        <h2 className="text-3xl font-bold">Utilize o Gyn JS</h2>
+        <h2 className="text-3xl font-bold">Utilize o Gyn JM</h2>
         <p className="text-muted-foreground">
           Durante seus treinos, use o aplicativo para:
         </p>
