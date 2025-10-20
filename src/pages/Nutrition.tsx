@@ -668,7 +668,7 @@ const Nutrition = () => {
         {/* Image Analysis Modal */}
         {(capturedImage || isAnalyzing) && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-            <div className="relative bg-background rounded-lg p-4 max-w-md w-full mx-4">
+            <div className="relative bg-background rounded-lg p-4 max-w-sm sm:max-w-md w-full mx-4">
               <Button
                 variant="ghost"
                 size="sm"
@@ -687,7 +687,7 @@ const Nutrition = () => {
                     <img
                       src={capturedImage}
                       alt="Refeição capturada"
-                      className="w-full rounded-lg"
+                      className="w-full rounded-lg max-h-[50vh] sm:max-h-none object-cover"
                     />
                     {isAnalyzing && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
