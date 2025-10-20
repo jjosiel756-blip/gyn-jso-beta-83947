@@ -12,11 +12,11 @@ const NutriAI = () => {
   const [userName, setUserName] = useState<string>('');
   const [conversationStage, setConversationStage] = useState<'start' | 'main'>('start');
   const recognitionRef = useRef<any>(null);
+  const [userGender, setUserGender] = useState('male');
   const conversationContext = useRef({
     lastTopic: '',
     userGoals: '',
-    dietaryPreferences: '',
-    userGender: 'male' // Default
+    dietaryPreferences: ''
   });
 
   // ✅ BUSCAR NOME DO PERFIL DO USUÁRIO
@@ -46,15 +46,36 @@ const NutriAI = () => {
 
   const firstName = getFirstName(profileName);
 
-  // ✅ CONFIGURAÇÃO DE VOZ POR GÊNERO
-  const getVoiceSettings = () => {
-    const isMale = conversationContext.current.userGender === 'male';
+  // ✅ DETECTAR GÊNERO DO USUÁRIO PELO NOME
+  const detectUserGender = (name: string) => {
+    const maleNames = ['carlos', 'joão', 'pedro', 'marcos', 'lucas', 'josiel', 'miguel', 'rafael', 
+                       'fernando', 'ricardo', 'rodrigo', 'paulo', 'bruno', 'andré', 'felipe'];
+    const femaleNames = ['ana', 'maria', 'julia', 'carla', 'patricia', 'fernanda', 'beatriz', 'amanda',
+                         'juliana', 'carolina', 'gabriela', 'camila', 'leticia', 'mariana', 'paula'];
     
-    return {
-      rate: isMale ? 0.95 : 1.05,       // Homem mais grave, mulher mais agudo
-      pitch: isMale ? 0.9 : 1.2,        // Tom masculino mais baixo
-      volume: 1.0
-    };
+    const cleanName = name.toLowerCase().trim();
+    if (maleNames.includes(cleanName)) return 'male';
+    if (femaleNames.includes(cleanName)) return 'female';
+    return 'male'; // padrão
+  };
+
+  // ✅ CONFIGURAÇÃO DE VOZ HUMANA POR GÊNERO
+  const getVoiceSettings = () => {
+    if (userGender === 'male') {
+      return {
+        rate: 0.95,    // Mais lento e grave
+        pitch: 0.85,   // Tom mais baixo
+        volume: 1.0,
+        voiceType: 'masculina'
+      };
+    } else {
+      return {
+        rate: 1.05,    // Um pouco mais rápido
+        pitch: 1.1,    // Tom mais agudo
+        volume: 1.0,
+        voiceType: 'feminina'
+      };
+    }
   };
 
   // ✅ CONFIGURAÇÃO AVANÇADA DE VOZ
@@ -112,7 +133,7 @@ const NutriAI = () => {
     }
   }, [isActive, isSpeaking]);
 
-  // ✅ FALA PERSONALIZADA POR GÊNERO
+  // ✅ FALA NATURAL E HUMANA COM PAUSAS
   const speakText = (text: string) => {
     return new Promise<void>((resolve) => {
       if (!('speechSynthesis' in window)) {
@@ -122,19 +143,38 @@ const NutriAI = () => {
 
       window.speechSynthesis.cancel();
       
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'pt-BR';
+      const utterance = new SpeechSynthesisUtterance();
       
-      // ✅ CONFIGURAÇÃO DE VOZ POR GÊNERO
+      // ✅ CONFIGURAÇÕES PARA VOZ HUMANA
       const voiceSettings = getVoiceSettings();
       utterance.rate = voiceSettings.rate;
       utterance.pitch = voiceSettings.pitch;
       utterance.volume = voiceSettings.volume;
+      utterance.lang = 'pt-BR';
+      
+      // ✅ TEXTOS COM PAUSAS NATURAIS
+      const naturalText = text
+        .replace(/!/g, '.')  // Troca ! por . para pausa natural
+        .replace(/\?/g, ',') // Troca ? por , para entonação
+        .replace(/\./g, '. '); // Espaços após pontos
+      
+      utterance.text = naturalText;
+
+      // ✅ TENTAR ENCONTRAR VOZES NATIVAS BRASILEIRAS
+      const voices = window.speechSynthesis.getVoices();
+      const ptVoice = voices.find(voice => 
+        voice.lang.includes('pt') && 
+        ((userGender === 'male' && voice.name.toLowerCase().includes('male')) ||
+         (userGender === 'female' && voice.name.toLowerCase().includes('female')))
+      );
+
+      if (ptVoice) {
+        utterance.voice = ptVoice;
+      }
 
       utterance.onstart = () => {
         console.log('🔊 NutriAI falando...');
         setIsSpeaking(true);
-        // ✅ PAUSAR OUVIR ENQUANTO FALA
         if (recognitionRef.current) {
           recognitionRef.current.stop();
         }
@@ -143,7 +183,6 @@ const NutriAI = () => {
       utterance.onend = () => {
         console.log('🔇 NutriAI terminou de falar');
         setIsSpeaking(false);
-        // ✅ VOLTAR A OUVIR APÓS FALAR
         if (isActive && recognitionRef.current) {
           setTimeout(() => {
             try {
@@ -151,7 +190,7 @@ const NutriAI = () => {
             } catch (e) {
               console.log('Reconhecimento já ativo');
             }
-          }, 800);
+          }, 1000);
         }
         resolve();
       };
@@ -162,7 +201,10 @@ const NutriAI = () => {
         resolve();
       };
 
-      window.speechSynthesis.speak(utterance);
+      // ✅ FALA COM PAUSA INICIAL PARA SOAR NATURAL
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 300);
     });
   };
 
@@ -181,10 +223,13 @@ const NutriAI = () => {
     return words[0] ? words[0].charAt(0).toUpperCase() + words[0].slice(1) : null;
   };
 
-  // ✅ ATIVAÇÃO COM SAUDAÇÃO PERSONALIZADA E HUMOR
+  // ✅ ATIVAÇÃO COM DETECÇÃO DE GÊNERO
   const activateNutriAI = async () => {
     setIsActive(true);
     setConversationStage('start');
+    
+    const detectedGender = detectUserGender(firstName);
+    setUserGender(detectedGender);
     
     let welcomeText = '';
     if (firstName && firstName !== 'Amigo') {
@@ -201,7 +246,6 @@ const NutriAI = () => {
     
     await speakText(welcomeText);
     
-    // ✅ INICIAR OUVIR PARA O NOME DO USUÁRIO
     if (recognitionRef.current) {
       setTimeout(() => {
         try {
@@ -209,7 +253,7 @@ const NutriAI = () => {
         } catch (e) {
           console.log('Reconhecimento já ativo');
         }
-      }, 1000);
+      }, 1500);
     }
   };
 
@@ -225,20 +269,21 @@ const NutriAI = () => {
     setConversation([]);
   };
 
-  // ✅ GERAR RESPOSTAS NUTRICIONAIS COM HUMOR
+  // ✅ RESPOSTAS NATURAIS COM NOME DO USUÁRIO
   const generateNutritionResponse = (userMessage: string, speakerName: string) => {
     const lowerMessage = userMessage.toLowerCase();
     
     const responses: Record<string, string> = {
-      'ensopado': `${speakerName}, ensopado de carne é minha paixão! Dica: use carne magra e muitos legumes. Quer a receita completa?`,
-      'carne': `${speakerName}, ensopado de carne é minha paixão! Dica: use carne magra e muitos legumes. Quer a receita completa?`,
-      'emagrecer': `Haha ${speakerName}, quer emagrecer? Vamos fazer isso com saúde! Corta os industrializados e foca nos alimentos naturais. Topa?`,
-      'perder peso': `Haha ${speakerName}, quer emagrecer? Vamos fazer isso com saúde! Corta os industrializados e foca nos alimentos naturais. Topa?`,
-      'proteína': `Proteína ${speakerName}? É o que há! Frango, ovos, whey... quer saber quanto você precisa por dia?`,
-      'musculação': `Proteína ${speakerName}? É o que há! Frango, ovos, whey... quer saber quanto você precisa por dia?`,
-      'frango': `Frango ${speakerName}? Clássico dos marombas! Grelhado é a melhor opção. Posso dar umas dicas de tempero?`,
-      'água': `${speakerName}, água é vida! Bebe uns 2 litros por dia que seu corpo agradece. Trust me!`,
+      'ensopado': `Ei ${speakerName}, ensopado de carne é uma ótima pedida! Vamos fazer uma versão saudável? Usa carne magra e muitos legumes. Quer que eu passe a receita completa?`,
+      'carne': `Ei ${speakerName}, ensopado de carne é uma ótima pedida! Vamos fazer uma versão saudável? Usa carne magra e muitos legumes. Quer que eu passe a receita completa?`,
+      'emagrecer': `Haha ${speakerName}, quer emagrecer? Vamos com calma! O segredo é consistência. Corta os industrializados e foca no que é natural. Topa o desafio?`,
+      'perder peso': `Haha ${speakerName}, quer emagrecer? Vamos com calma! O segredo é consistência. Corta os industrializados e foca no que é natural. Topa o desafio?`,
+      'proteína': `Falou em proteína ${speakerName}? Isso é música pros meus ouvidos! Frango, ovos, whey... quer saber calcular quanto você precisa por dia?`,
+      'musculação': `Falou em proteína ${speakerName}? Isso é música pros meus ouvidos! Frango, ovos, whey... quer saber calcular quanto você precisa por dia?`,
+      'frango': `${speakerName}, frango é clássico! Mas tem que saber preparar. Grelhado com temperos naturais fica divino. Quer umas dicas?`,
+      'água': `Água ${speakerName}? Isso é fundamental! Bebe uns 2 litros por dia que seu metabolismo agradece. Confia em mim!`,
       'salada': `Salada ${speakerName}? Amo! Mistura cores e texturas para ficar top. Tem alguma folha favorita?`,
+      'dieta': `Sobre dieta ${speakerName}, cada pessoa é única. Vamos criar um plano que funcione pra você? Me conta sua rotina...`,
       'obrigado': `De nada ${speakerName}! Tamo junto nessa jornada nutricional!`,
       'obrigada': `De nada ${speakerName}! Tamo junto nessa jornada nutricional!`
     };
@@ -249,7 +294,7 @@ const NutriAI = () => {
       }
     }
     
-    return `Interessante ${speakerName}! Sobre nutrição, posso te ajudar com receitas, cálculos ou dicas. O que te interessa?`;
+    return `Interessante ${speakerName}! Sobre nutrição, posso te ajudar com receitas, cálculos ou dicas. O que te chama mais atenção?`;
   };
 
   const handleUserMessage = async (userText: string) => {
@@ -269,6 +314,8 @@ const NutriAI = () => {
       const detectedName = extractName(userText);
       if (detectedName) {
         setUserName(detectedName);
+        const gender = detectUserGender(detectedName);
+        setUserGender(gender);
         setConversationStage('main');
         
         // ✅ RESPOSTA COM HUMOR SE FOR O MESMO NOME
@@ -316,7 +363,7 @@ const NutriAI = () => {
               <div>
                 <h3 className="font-bold text-base">NutriAI - {firstName}</h3>
                 <p className="text-xs opacity-90">
-                  {conversationContext.current.userGender === 'male' ? 'Nutricionista Masculino' : 'Nutricionista Feminina'}
+                  {userGender === 'male' ? 'Voz Masculina' : 'Voz Feminina'}
                 </p>
               </div>
               <button 
