@@ -14,6 +14,7 @@ interface AuthDialogProps {
 
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,6 +39,36 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       console.error("Erro no login Google:", error);
       toast.error(error.message || "Erro ao fazer login com Google");
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast.error("Digite seu email");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/`,
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+        setIsForgotPassword(false);
+        setEmail("");
+      }
+    } catch (error) {
+      toast.error("Erro ao enviar email de recuperação");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,16 +136,60 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       <DialogContent className="sm:max-w-md border-border/20 glass-card">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            {isLogin ? "Entrar" : "Criar Conta"}
+            {isForgotPassword ? "Recuperar Senha" : isLogin ? "Entrar" : "Criar Conta"}
           </DialogTitle>
           <DialogDescription className="text-center">
-            {isLogin 
-              ? "Entre para continuar sua jornada fitness" 
-              : "Crie sua conta e comece a transformação"}
+            {isForgotPassword
+              ? "Digite seu email para receber instruções de recuperação"
+              : isLogin 
+                ? "Entre para continuar sua jornada fitness" 
+                : "Crie sua conta e comece a transformação"}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleAuth} className="space-y-4 mt-4">
+        {isForgotPassword ? (
+          <form onSubmit={handleForgotPassword} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                className="bg-background/50 border-border/50"
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full gradient-hero hover:opacity-90 transition-smooth"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                "Enviar Email de Recuperação"
+              )}
+            </Button>
+
+            <div className="text-center text-sm">
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(false)}
+                className="text-muted-foreground hover:text-foreground transition-smooth underline"
+                disabled={loading}
+              >
+                Voltar para o login
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleAuth} className="space-y-4 mt-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -201,19 +276,30 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             )}
           </Button>
 
-          <div className="text-center text-sm">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-muted-foreground hover:text-foreground transition-smooth underline"
-              disabled={loading}
-            >
-              {isLogin 
-                ? "Não tem conta? Criar nova conta" 
-                : "Já tem conta? Fazer login"}
-            </button>
-          </div>
-        </form>
+            <div className="text-center text-sm space-y-2">
+              {isLogin && (
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(true)}
+                  className="text-muted-foreground hover:text-foreground transition-smooth underline block w-full"
+                  disabled={loading}
+                >
+                  Esqueceu a senha?
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-muted-foreground hover:text-foreground transition-smooth underline"
+                disabled={loading}
+              >
+                {isLogin 
+                  ? "Não tem conta? Criar nova conta" 
+                  : "Já tem conta? Fazer login"}
+              </button>
+            </div>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
