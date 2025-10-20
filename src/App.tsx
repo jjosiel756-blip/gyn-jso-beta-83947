@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import Exercises from "./pages/Exercises";
 import NotFound from "./pages/NotFound";
 import OnboardingFlow from "./components/onboarding/OnboardingFlow";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/onboarding" element={<OnboardingFlow />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/nutrition" element={<Nutrition />} />
