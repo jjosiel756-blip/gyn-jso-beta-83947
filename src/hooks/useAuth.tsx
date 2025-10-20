@@ -42,9 +42,32 @@ export function useAuth() {
         .eq('user_id', user.id)
         .single();
 
+      // Se já existe um perfil com nome válido (não é email), não sobrescrever
+      if (existingProfile?.name && 
+          !existingProfile.name.includes('@') && 
+          existingProfile.name !== 'Usuário') {
+        // Apenas atualizar avatar se necessário
+        const newAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+        if (newAvatar && newAvatar !== existingProfile.avatar_url) {
+          await supabase
+            .from('profiles')
+            .update({ avatar_url: newAvatar })
+            .eq('user_id', user.id);
+        }
+        return;
+      }
+
+      // Extrair nome do metadata ou email
+      let userName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+      
+      // Se não houver nome no metadata, usar parte do email
+      if (!userName && user.email) {
+        userName = user.email.split('@')[0];
+      }
+
       const profileData = {
         user_id: user.id,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário',
+        name: userName || 'Usuário',
         avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
       };
 

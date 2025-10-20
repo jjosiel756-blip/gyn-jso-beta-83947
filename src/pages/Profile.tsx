@@ -73,8 +73,17 @@ const Profile = () => {
 
         if (profile) {
           setAvatarUrl(profile.avatar_url || '');
+          
+          // Se o nome salvo for um email, tentar usar o metadata do usuário
+          let displayName = profile.name || '';
+          if (displayName.includes('@')) {
+            displayName = user.user_metadata?.full_name || 
+                         user.user_metadata?.name || 
+                         displayName.split('@')[0].replace(/[.+]/g, ' ');
+          }
+          
           setUserData({
-            name: profile.name || user.user_metadata?.name || user.user_metadata?.full_name || '',
+            name: displayName,
             email: user.email ?? '',
             age: profile.age ?? null,
             weight: profile.weight ?? null,
