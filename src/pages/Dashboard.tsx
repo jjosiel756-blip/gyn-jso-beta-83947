@@ -3,10 +3,11 @@ import { StatCard } from "@/components/StatCard";
 import { GymCard } from "@/components/GymCard";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, Clock, Target, Flame, Droplets, Zap, Plus, TrendingUp } from "lucide-react";
+import { Calendar, Clock as ClockIcon, Target, Flame, Droplets, Zap, Plus, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeSelector } from "@/components/ThemeSelector";
+import { Clock } from "@/components/Clock";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMotivationalMessage } from "@/hooks/useMotivationalMessage";
@@ -58,7 +59,7 @@ const Dashboard = () => {
     { icon: <Flame className="w-6 h-6" />, title: "Calorias Queimadas", value: "420", change: "+15%", variant: "fitness" as const },
     { icon: <Droplets className="w-6 h-6" />, title: "Água Consumida", value: "1.8L", change: "+5%", variant: "default" as const },
     { icon: <Target className="w-6 h-6" />, title: "Meta de Proteína", value: "85g", change: "+12%", variant: "nutrition" as const },
-    { icon: <Clock className="w-6 h-6" />, title: "Tempo de Treino", value: "45min", variant: "fitness" as const },
+    { icon: <ClockIcon className="w-6 h-6" />, title: "Tempo de Treino", value: "45min", variant: "fitness" as const },
   ];
 
   return (
@@ -75,19 +76,22 @@ const Dashboard = () => {
             </div>
             <p className="motivational-text text-primary font-medium">{motivationalMessage}</p>
           </div>
-          <div className="flex gap-2">
-            <Link to="/workouts">
-              <Button variant="fitness" size="sm">
-                <Plus className="w-4 h-4" />
-                Novo Treino
-              </Button>
-            </Link>
-            <Link to="/nutrition">
-              <Button variant="nutrition" size="sm">
-                <Plus className="w-4 h-4" />
-                Analisar Refeição
-              </Button>
-            </Link>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Clock />
+            <div className="flex gap-2">
+              <Link to="/workouts">
+                <Button variant="fitness" size="sm">
+                  <Plus className="w-4 h-4" />
+                  Novo Treino
+                </Button>
+              </Link>
+              <Link to="/nutrition">
+                <Button variant="nutrition" size="sm">
+                  <Plus className="w-4 h-4" />
+                  Analisar Refeição
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
