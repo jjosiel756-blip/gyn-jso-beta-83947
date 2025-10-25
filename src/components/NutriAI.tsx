@@ -59,21 +59,23 @@ const NutriAI = () => {
     return 'male'; // padrão
   };
 
-  // ✅ CONFIGURAÇÃO DE VOZ HUMANA POR GÊNERO
+  // ✅ CONFIGURAÇÃO DE VOZ CARISMÁTICA E NATURAL POR GÊNERO
   const getVoiceSettings = () => {
     if (userGender === 'male') {
       return {
-        rate: 0.95,    // Mais lento e grave
-        pitch: 0.85,   // Tom mais baixo
+        rate: 0.92,    // Ritmo carismático e envolvente
+        pitch: 0.88,   // Tom masculino agradável
         volume: 1.0,
-        voiceType: 'masculina'
+        pauseBetweenPhrases: 0.55,
+        voiceType: 'masculina_humanizada_calma'
       };
     } else {
       return {
-        rate: 1.05,    // Um pouco mais rápido
-        pitch: 1.1,    // Tom mais agudo
+        rate: 0.92,    // Mesma velocidade natural
+        pitch: 1.12,   // Tom feminino agradável
         volume: 1.0,
-        voiceType: 'feminina'
+        pauseBetweenPhrases: 0.55,
+        voiceType: 'feminina_humanizada_agradavel'
       };
     }
   };
@@ -133,7 +135,7 @@ const NutriAI = () => {
     }
   }, [isActive, isSpeaking]);
 
-  // ✅ FALA NATURAL E HUMANA COM PAUSAS
+  // ✅ FALA CARISMÁTICA COM PAUSAS E EMOÇÃO
   const speakText = (text: string) => {
     return new Promise<void>((resolve) => {
       if (!('speechSynthesis' in window)) {
@@ -145,18 +147,20 @@ const NutriAI = () => {
       
       const utterance = new SpeechSynthesisUtterance();
       
-      // ✅ CONFIGURAÇÕES PARA VOZ HUMANA
+      // ✅ CONFIGURAÇÕES PARA VOZ CARISMÁTICA E ENVOLVENTE
       const voiceSettings = getVoiceSettings();
       utterance.rate = voiceSettings.rate;
       utterance.pitch = voiceSettings.pitch;
       utterance.volume = voiceSettings.volume;
       utterance.lang = 'pt-BR';
       
-      // ✅ TEXTOS COM PAUSAS NATURAIS
+      // ✅ PAUSAS NATURAIS COM VARIAÇÃO DE INTONAÇÃO
       const naturalText = text
-        .replace(/!/g, '.')  // Troca ! por . para pausa natural
-        .replace(/\?/g, ',') // Troca ? por , para entonação
-        .replace(/\./g, '. '); // Espaços após pontos
+        .replace(/\.\.\./g, '... ')  // Pausas reflexivas
+        .replace(/!/g, '! ')         // Ênfase com pausa
+        .replace(/\?/g, '? ')         // Pergunta com pausa
+        .replace(/,/g, ', ')          // Respiração em vírgulas
+        .replace(/\./g, '. ');        // Pausa entre frases
       
       utterance.text = naturalText;
 
@@ -184,13 +188,14 @@ const NutriAI = () => {
         console.log('🔇 NutriAI terminou de falar');
         setIsSpeaking(false);
         if (isActive && recognitionRef.current) {
+          // ✅ Pausa de 0.55s antes de reativar microfone (mais natural)
           setTimeout(() => {
             try {
               recognitionRef.current.start();
             } catch (e) {
               console.log('Reconhecimento já ativo');
             }
-          }, 1000);
+          }, 550);
         }
         resolve();
       };
@@ -223,7 +228,7 @@ const NutriAI = () => {
     return words[0] ? words[0].charAt(0).toUpperCase() + words[0].slice(1) : null;
   };
 
-  // ✅ ATIVAÇÃO COM DETECÇÃO DE GÊNERO
+  // ✅ ATIVAÇÃO CARISMÁTICA COM VARIAÇÃO
   const activateNutriAI = async () => {
     setIsActive(true);
     setConversationStage('start');
@@ -231,11 +236,18 @@ const NutriAI = () => {
     const detectedGender = detectUserGender(firstName);
     setUserGender(detectedGender);
     
+    // ✅ Saudações variadas para não repetir
+    const greetings = [
+      `Oi, eu sou ${userGender === 'male' ? 'seu' : 'sua'} NutriAI, me chamo ${firstName}, e vamos focar na sua alimentação e nutrição. Aliás, como você se chama?`,
+      `E aí! Sou ${userGender === 'male' ? 'o' : 'a'} NutriAI, pode me chamar de ${firstName}. Vou te ajudar com nutrição e bem-estar. Qual é seu nome?`,
+      `Olá! Me chamo ${firstName} e sou ${userGender === 'male' ? 'seu nutricionista virtual' : 'sua nutricionista virtual'}. Vamos conversar sobre alimentação? Primeiro, como você se chama?`
+    ];
+    
     let welcomeText = '';
     if (firstName && firstName !== 'Amigo') {
-      welcomeText = `Oi, eu sou seu NutriAI me chamo ${firstName}, e vamos focar na sua alimentação e nutrição. Aliás, como você se chama?`;
+      welcomeText = greetings[Math.floor(Math.random() * greetings.length)];
     } else {
-      welcomeText = `Oi, eu sou seu NutriAI! Vamos focar na sua alimentação e nutrição. Primeiro, como você se chama?`;
+      welcomeText = `Oi, eu sou ${userGender === 'male' ? 'seu' : 'sua'} NutriAI! Vamos focar na sua alimentação e nutrição. Primeiro, como você se chama?`;
     }
     
     setConversation([{
@@ -269,32 +281,74 @@ const NutriAI = () => {
     setConversation([]);
   };
 
-  // ✅ RESPOSTAS NATURAIS COM NOME DO USUÁRIO
+  // ✅ RESPOSTAS CARISMÁTICAS COM VARIAÇÃO E EMOÇÃO
   const generateNutritionResponse = (userMessage: string, speakerName: string) => {
     const lowerMessage = userMessage.toLowerCase();
     
-    const responses: Record<string, string> = {
-      'ensopado': `Ei ${speakerName}, ensopado de carne é uma ótima pedida! Vamos fazer uma versão saudável? Usa carne magra e muitos legumes. Quer que eu passe a receita completa?`,
-      'carne': `Ei ${speakerName}, ensopado de carne é uma ótima pedida! Vamos fazer uma versão saudável? Usa carne magra e muitos legumes. Quer que eu passe a receita completa?`,
-      'emagrecer': `Haha ${speakerName}, quer emagrecer? Vamos com calma! O segredo é consistência. Corta os industrializados e foca no que é natural. Topa o desafio?`,
-      'perder peso': `Haha ${speakerName}, quer emagrecer? Vamos com calma! O segredo é consistência. Corta os industrializados e foca no que é natural. Topa o desafio?`,
-      'proteína': `Falou em proteína ${speakerName}? Isso é música pros meus ouvidos! Frango, ovos, whey... quer saber calcular quanto você precisa por dia?`,
-      'musculação': `Falou em proteína ${speakerName}? Isso é música pros meus ouvidos! Frango, ovos, whey... quer saber calcular quanto você precisa por dia?`,
-      'frango': `${speakerName}, frango é clássico! Mas tem que saber preparar. Grelhado com temperos naturais fica divino. Quer umas dicas?`,
-      'água': `Água ${speakerName}? Isso é fundamental! Bebe uns 2 litros por dia que seu metabolismo agradece. Confia em mim!`,
-      'salada': `Salada ${speakerName}? Amo! Mistura cores e texturas para ficar top. Tem alguma folha favorita?`,
-      'dieta': `Sobre dieta ${speakerName}, cada pessoa é única. Vamos criar um plano que funcione pra você? Me conta sua rotina...`,
-      'obrigado': `De nada ${speakerName}! Tamo junto nessa jornada nutricional!`,
-      'obrigada': `De nada ${speakerName}! Tamo junto nessa jornada nutricional!`
+    // ✅ RESPOSTAS COM VARIAÇÃO - nunca repete a mesma estrutura
+    const responseVariations: Record<string, string[]> = {
+      'emagrecer|perder peso|peso': [
+        `Entendi, ${speakerName}. A gente pode começar ajustando pequenas coisas, tipo trocar refrigerante por água saborizada ou incluir frutas no lanche. Quer que eu te ajude a montar um plano leve pra essa semana?`,
+        `Legal isso! Quer perder peso? Olha só, o segredo tá na consistência, não em dieta maluca. Que tal a gente focar em trocar alimentos industrializados por comida de verdade? Topa?`,
+        `Boa pergunta! Perder peso com saúde é totalmente possível, ${speakerName}. Vamos começar pelo básico: mais água, menos açúcar, e comida caseira. Posso te dar um cardápio simples pra testar?`
+      ],
+      'massa|ganhar massa|muscular|musculação|força': [
+        `Show! Nesse caso, a base é proteína e constância. Pensa em ovos, peixes, frango e leguminosas como feijão e lentilha. Posso te dar umas opções de lanche pós-treino?`,
+        `${speakerName}, pra ganhar massa você precisa de proteínas magras, carboidratos bons e bastante água. Um exemplo seria frango grelhado com batata-doce e salada colorida. Quer que eu monte um cardápio rápido pra isso?`,
+        `Massa muscular é meu forte! A dica é: proteína em todas as refeições. Ovos no café, frango no almoço, peixe no jantar. Quer saber as quantidades ideais pra você?`
+      ],
+      'receita|receitas|prato|comida|refeição': [
+        `Boa! Vamos de receitas então. Me conta, você curte comida mais leve ou algo mais substancial? E tem algum ingrediente que você ama?`,
+        `Olha só, ${speakerName}, tenho várias receitas fit e gostosas! Quer algo rápido pro dia a dia ou uma receita especial pra fim de semana?`,
+        `Receitas é comigo mesmo! Que tal a gente montar algo com ingredientes que você já tem em casa? Me fala o que tem na geladeira!`
+      ],
+      'água|hidrat': [
+        `${speakerName}, água é vida! Sério, bebe pelo menos 2 litros por dia. Seu corpo vai agradecer, confia. Quer dicas pra lembrar de beber mais?`,
+        `Olha só, água é fundamental! Se você treina, aumenta pra uns 3 litros. E se achar sem graça, adiciona limão ou hortelã. Fica show!`,
+        `Boa! Água é essencial pra tudo: metabolismo, pele, energia... Tenta sempre ter uma garrafa por perto, ajuda demais!`
+      ],
+      'dia|hoje|data|clima': [
+        `Hoje é ${new Date().toLocaleDateString('pt-BR')}! Aliás, ótimo dia pra cuidar da alimentação, né? Quer que eu te lembre de beber mais água hoje?`,
+        `Olha só, hoje tá perfeito pra começar hábitos saudáveis! Me conta, ${speakerName}, como foi sua alimentação até agora hoje?`
+      ],
+      'desanim|triste|cansad|sono': [
+        `Poxa, entendo... tem dias assim mesmo, ${speakerName}. Que tal a gente tentar ajustar sua alimentação pra te dar mais energia? Às vezes, um bom café da manhã muda tudo!`,
+        `Sei como é. Cansaço pode ser falta de nutrientes, sabia? Vamos revisar o que você tá comendo? Pode ser que falte ferro ou vitaminas do complexo B.`
+      ],
+      'obrigad': [
+        `De nada, ${speakerName}! Tamo junto nessa jornada nutricional!`,
+        `Imagina! Qualquer coisa, só chamar. Estou aqui pra te ajudar sempre!`,
+        `Por nada! Adorei nossa conversa, viu? Sempre que precisar, é só falar!`
+      ],
+      'você|bot|robo|ia': [
+        `Haha, não exatamente... mas se eu pudesse, com certeza experimentaria sua comida saudável! Me conta, ${speakerName}, o que você costuma preparar?`,
+        `Olha, sou uma IA sim, mas tô aqui pra te ajudar de verdade com nutrição! Então, bora focar no seu bem-estar?`
+      ]
     };
 
-    for (const [key, response] of Object.entries(responses)) {
-      if (lowerMessage.includes(key)) {
-        return response;
+    // ✅ Procura resposta variada
+    for (const [keys, responses] of Object.entries(responseVariations)) {
+      const keyList = keys.split('|');
+      if (keyList.some(key => lowerMessage.includes(key))) {
+        // Seleciona resposta aleatória para variação
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        
+        // ✅ Atualiza contexto da conversa
+        conversationContext.current.lastTopic = keys.split('|')[0];
+        
+        return randomResponse;
       }
     }
     
-    return `Interessante ${speakerName}! Sobre nutrição, posso te ajudar com receitas, cálculos ou dicas. O que te chama mais atenção?`;
+    // ✅ Respostas genéricas variadas para manter naturalidade
+    const genericResponses = [
+      `Interessante, ${speakerName}! Sobre nutrição, posso te ajudar com receitas, cálculos ou dicas personalizadas. O que te interessa mais?`,
+      `Legal isso! Me conta mais, ${speakerName}. Como posso te ajudar com alimentação hoje?`,
+      `Olha só, ${speakerName}, adorei sua curiosidade! Quer falar sobre dieta, receitas ou dicas gerais de saúde?`,
+      `Boa pergunta! Vamos explorar isso juntos, ${speakerName}. Me dá mais detalhes do que você tá pensando?`
+    ];
+    
+    return genericResponses[Math.floor(Math.random() * genericResponses.length)];
   };
 
   const handleUserMessage = async (userText: string) => {
@@ -318,19 +372,35 @@ const NutriAI = () => {
         setUserGender(gender);
         setConversationStage('main');
         
-        // ✅ RESPOSTA COM HUMOR SE FOR O MESMO NOME
+        // ✅ RESPOSTAS CARISMÁTICAS VARIADAS
         if (firstName && firstName !== 'Amigo' && firstName.toLowerCase() === detectedName.toLowerCase()) {
-          aiResponse = `Ah meu chará! Também me chamo ${detectedName}! Que coincidência fantástica! Então ${detectedName}, vamos ao que importa? O que você deseja saber sobre nutrição?`;
+          const sameNameResponses = [
+            `Ah, meu chará! Também me chamo ${detectedName}! Que coincidência fantástica! Então ${detectedName}, vamos ao que importa? O que você quer saber sobre nutrição?`,
+            `Olha só! Somos xará, ${detectedName}! Adorei isso! Bom, agora que já nos conhecemos, me conta: qual é seu objetivo com alimentação?`,
+            `Sério?! Também sou ${detectedName}! Que massa! Bom ${detectedName}, vamos direto ao assunto: quer falar de emagrecimento, ganho de massa ou saúde geral?`
+          ];
+          aiResponse = sameNameResponses[Math.floor(Math.random() * sameNameResponses.length)];
         } else {
-          aiResponse = `Prazer, ${detectedName}! Que nome bonito! Então vamos ao que importa? O que você deseja saber sobre alimentação e nutrição?`;
+          const introResponses = [
+            `Prazer, ${detectedName}! Que nome bonito! Então vamos ao que importa? O que você deseja saber sobre alimentação e nutrição?`,
+            `Oi ${detectedName}! Legal te conhecer! Bom, agora me conta: seu foco é emagrecer, ganhar massa ou ter mais energia no dia a dia?`,
+            `${detectedName}! Adoro esse nome! Bom, vamos lá: qual é seu principal objetivo com nutrição agora?`,
+            `Olá ${detectedName}! Que bom ter você aqui! Me fala, o que te trouxe até mim? Quer ajuda com dieta, receitas ou dicas de saúde?`
+          ];
+          aiResponse = introResponses[Math.floor(Math.random() * introResponses.length)];
         }
       } else {
-        aiResponse = `Desculpe, não entendi seu nome. Pode repetir? Como você se chama?`;
+        const retryResponses = [
+          `Desculpa ${firstName !== 'Amigo' ? firstName : 'amigo'}, não consegui pegar seu nome. Pode repetir pra mim?`,
+          `Ops, não entendi direito. Como você disse que se chama?`,
+          `Olha, acho que não captei bem. Qual é seu nome mesmo?`
+        ];
+        aiResponse = retryResponses[Math.floor(Math.random() * retryResponses.length)];
       }
     }
-    // ✅ FASE 2: CONVERSA PRINCIPAL
+    // ✅ FASE 2: CONVERSA PRINCIPAL COM CONTEXTO
     else {
-      aiResponse = generateNutritionResponse(userText, userName || 'amigo');
+      aiResponse = generateNutritionResponse(userText, userName || firstName || 'amigo');
     }
     
     const aiMessage = { 
