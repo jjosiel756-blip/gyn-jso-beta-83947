@@ -13,22 +13,10 @@ const NutriAI = () => {
   const [conversationStage, setConversationStage] = useState<'start' | 'main'>('start');
   const recognitionRef = useRef<any>(null);
   const [userGender, setUserGender] = useState('male');
-  // ✅ MEMÓRIA DE CURTO PRAZO (até 5 interações) - v3.0
-  const conversationMemory = useRef<Array<{
-    userMessage: string;
-    aiResponse: string;
-    topic: string;
-    emotion: string;
-    timestamp: Date;
-  }>>([]);
-  
   const conversationContext = useRef({
     lastTopic: '',
     userGoals: '',
-    dietaryPreferences: '',
-    lastMeal: '',
-    currentObjective: '',
-    emotionalState: 'neutral'
+    dietaryPreferences: ''
   });
 
   // ✅ BUSCAR NOME DO PERFIL DO USUÁRIO
@@ -71,42 +59,25 @@ const NutriAI = () => {
     return 'male'; // padrão
   };
 
-  // ✅ DETECTAR EMOÇÃO DO USUÁRIO (v3.0)
-  const detectEmotion = (message: string): string => {
-    const lowerMsg = message.toLowerCase();
-    
-    if (lowerMsg.match(/triste|desanim|cansad|deprimi|chate|mal/)) return 'sad';
-    if (lowerMsg.match(/felic|anim|empolgad|otimo|ótimo|show|massa|legal/)) return 'happy';
-    if (lowerMsg.match(/ansios|preocup|nervos|stress|estress/)) return 'anxious';
-    if (lowerMsg.match(/conf|dúvid|duvid|não sei|perdid/)) return 'confused';
-    
-    return 'neutral';
-  };
-
-  // ✅ CONFIGURAÇÃO DE VOZ CARISMÁTICA E NATURAL POR GÊNERO (v3.0)
-  const getVoiceSettings = (emotion: string = 'neutral') => {
-    const baseSettings = userGender === 'male' ? {
-      rate: 0.9,     // Velocidade natural v3.0
-      pitch: 0.88,   // Tom masculino agradável
-      volume: 1.0,
-      pauseBetweenPhrases: 0.5,
-      microPauses: [0.3, 0.5],
-      voiceType: 'masculina_humanizada_calma'
-    } : {
-      rate: 0.9,     // Velocidade natural v3.0
-      pitch: 1.12,   // Tom feminino agradável
-      volume: 1.0,
-      pauseBetweenPhrases: 0.5,
-      microPauses: [0.3, 0.5],
-      voiceType: 'feminina_humanizada_agradavel'
-    };
-    
-    // ✅ Ajustar velocidade baseado na emoção detectada
-    if (emotion === 'sad') baseSettings.rate = 0.85; // Mais devagar e empático
-    if (emotion === 'happy') baseSettings.rate = 0.95; // Mais animado
-    if (emotion === 'anxious') baseSettings.rate = 0.88; // Calmo para acalmar
-    
-    return baseSettings;
+  // ✅ CONFIGURAÇÃO DE VOZ CARISMÁTICA E NATURAL POR GÊNERO
+  const getVoiceSettings = () => {
+    if (userGender === 'male') {
+      return {
+        rate: 0.92,    // Ritmo carismático e envolvente
+        pitch: 0.88,   // Tom masculino agradável
+        volume: 1.0,
+        pauseBetweenPhrases: 0.55,
+        voiceType: 'masculina_humanizada_calma'
+      };
+    } else {
+      return {
+        rate: 0.92,    // Mesma velocidade natural
+        pitch: 1.12,   // Tom feminino agradável
+        volume: 1.0,
+        pauseBetweenPhrases: 0.55,
+        voiceType: 'feminina_humanizada_agradavel'
+      };
+    }
   };
 
   // ✅ CONFIGURAÇÃO AVANÇADA DE VOZ
@@ -164,84 +135,8 @@ const NutriAI = () => {
     }
   }, [isActive, isSpeaking]);
 
-  // ✅ FALA NATURAL COM ELEVENLABS TTS (v4.0 - voz neural humanizada)
-  const speakText = async (text: string, emotion: string = 'neutral') => {
-    try {
-      setIsSpeaking(true);
-      console.log('🔊 Gerando voz natural com ElevenLabs...');
-      
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-
-      // ✅ PAUSAS NATURAIS COM EXPRESSÕES HUMANAS
-      const naturalText = text
-        .replace(/\.\.\./g, '... ')   // Pausas reflexivas
-        .replace(/!/g, '! ')          // Ênfase com pausa
-        .replace(/\?/g, '? ')          // Pergunta com pausa
-        .replace(/,/g, ', ')           // Micro pausas
-        .replace(/\bhm+\b/gi, 'hmm, ') // Expressões humanas
-        .replace(/\b(olha|sabe|então|poxa|legal)\b/gi, '$1, '); // Pausas em conectivos
-
-      // Chamar Edge Function com ElevenLabs
-      const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
-        body: { 
-          text: naturalText, 
-          gender: userGender,
-          emotion: emotion
-        }
-      });
-
-      if (error) {
-        console.error('❌ Erro ao gerar áudio:', error);
-        // Fallback para voz do navegador
-        await fallbackBrowserTTS(text, emotion);
-        return;
-      }
-
-      if (!data?.audioContent) {
-        throw new Error('Nenhum áudio retornado');
-      }
-
-      // Converter base64 para áudio e reproduzir
-      const audioBlob = base64ToBlob(data.audioContent, 'audio/mpeg');
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-
-      audio.onended = () => {
-        console.log('🔇 NutriAI terminou de falar');
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-        
-        if (isActive && recognitionRef.current) {
-          setTimeout(() => {
-            try {
-              recognitionRef.current.start();
-            } catch (e) {
-              console.log('Reconhecimento já ativo');
-            }
-          }, 500);
-        }
-      };
-
-      audio.onerror = (e) => {
-        console.error('❌ Erro ao reproduzir áudio:', e);
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      await audio.play();
-
-    } catch (error) {
-      console.error('❌ Erro no TTS:', error);
-      setIsSpeaking(false);
-      // Fallback para voz do navegador em caso de erro
-      await fallbackBrowserTTS(text, emotion);
-    }
-  };
-
-  // ✅ FALLBACK: Voz do navegador caso ElevenLabs falhe
-  const fallbackBrowserTTS = (text: string, emotion: string = 'neutral') => {
+  // ✅ FALA CARISMÁTICA COM PAUSAS E EMOÇÃO
+  const speakText = (text: string) => {
     return new Promise<void>((resolve) => {
       if (!('speechSynthesis' in window)) {
         resolve();
@@ -249,53 +144,73 @@ const NutriAI = () => {
       }
 
       window.speechSynthesis.cancel();
+      
       const utterance = new SpeechSynthesisUtterance();
       
-      const voiceSettings = getVoiceSettings(emotion);
+      // ✅ CONFIGURAÇÕES PARA VOZ CARISMÁTICA E ENVOLVENTE
+      const voiceSettings = getVoiceSettings();
       utterance.rate = voiceSettings.rate;
       utterance.pitch = voiceSettings.pitch;
       utterance.volume = voiceSettings.volume;
       utterance.lang = 'pt-BR';
-      utterance.text = text;
+      
+      // ✅ PAUSAS NATURAIS COM VARIAÇÃO DE INTONAÇÃO
+      const naturalText = text
+        .replace(/\.\.\./g, '... ')  // Pausas reflexivas
+        .replace(/!/g, '! ')         // Ênfase com pausa
+        .replace(/\?/g, '? ')         // Pergunta com pausa
+        .replace(/,/g, ', ')          // Respiração em vírgulas
+        .replace(/\./g, '. ');        // Pausa entre frases
+      
+      utterance.text = naturalText;
 
+      // ✅ TENTAR ENCONTRAR VOZES NATIVAS BRASILEIRAS
       const voices = window.speechSynthesis.getVoices();
-      const ptVoice = voices.find(voice => voice.lang.includes('pt'));
-      if (ptVoice) utterance.voice = ptVoice;
+      const ptVoice = voices.find(voice => 
+        voice.lang.includes('pt') && 
+        ((userGender === 'male' && voice.name.toLowerCase().includes('male')) ||
+         (userGender === 'female' && voice.name.toLowerCase().includes('female')))
+      );
+
+      if (ptVoice) {
+        utterance.voice = ptVoice;
+      }
+
+      utterance.onstart = () => {
+        console.log('🔊 NutriAI falando...');
+        setIsSpeaking(true);
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
+      };
 
       utterance.onend = () => {
+        console.log('🔇 NutriAI terminou de falar');
         setIsSpeaking(false);
         if (isActive && recognitionRef.current) {
+          // ✅ Pausa de 0.55s antes de reativar microfone (mais natural)
           setTimeout(() => {
             try {
               recognitionRef.current.start();
             } catch (e) {
               console.log('Reconhecimento já ativo');
             }
-          }, 500);
+          }, 550);
         }
         resolve();
       };
 
-      utterance.onerror = () => {
+      utterance.onerror = (event) => {
+        console.error('❌ Erro na fala:', event);
         setIsSpeaking(false);
         resolve();
       };
 
+      // ✅ FALA COM PAUSA INICIAL PARA SOAR NATURAL
       setTimeout(() => {
         window.speechSynthesis.speak(utterance);
       }, 300);
     });
-  };
-
-  // ✅ CONVERTER BASE64 PARA BLOB
-  const base64ToBlob = (base64: string, mimeType: string): Blob => {
-    const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: mimeType });
   };
 
   // ✅ EXTRAIR NOME DA FALA DO USUÁRIO
@@ -366,63 +281,21 @@ const NutriAI = () => {
     setConversation([]);
   };
 
-  // ✅ ADICIONAR À MEMÓRIA (v3.0)
-  const addToMemory = (userMsg: string, aiResp: string, topic: string, emotion: string) => {
-    conversationMemory.current.push({
-      userMessage: userMsg,
-      aiResponse: aiResp,
-      topic,
-      emotion,
-      timestamp: new Date()
-    });
-    
-    // ✅ Manter apenas últimas 5 interações
-    if (conversationMemory.current.length > 5) {
-      conversationMemory.current.shift();
-    }
-  };
-
-  // ✅ VERIFICAR MEMÓRIA PARA CONTEXTO (v3.0)
-  const checkMemoryForContext = (currentMessage: string): string | null => {
-    const lowerMsg = currentMessage.toLowerCase();
-    
-    // ✅ Se usuário perguntar sobre algo anterior
-    if (lowerMsg.match(/lembra|falei|disse|comentei|ontem|antes/)) {
-      const recentMemory = conversationMemory.current[conversationMemory.current.length - 1];
-      if (recentMemory) {
-        return `Lembro sim! Você comentou sobre ${recentMemory.topic}. Como foi?`;
-      }
-    }
-    
-    // ✅ Se usuário mencionar refeição novamente
-    if (conversationContext.current.lastMeal && lowerMsg.includes(conversationContext.current.lastMeal.toLowerCase())) {
-      return `Ah, você tá falando daquele ${conversationContext.current.lastMeal} que comentou? Quer ajustar algo nele?`;
-    }
-    
-    return null;
-  };
-
-  // ✅ RESPOSTAS CARISMÁTICAS COM VARIAÇÃO E EMOÇÃO (v3.0)
+  // ✅ RESPOSTAS CARISMÁTICAS COM VARIAÇÃO E EMOÇÃO
   const generateNutritionResponse = (userMessage: string, speakerName: string) => {
     const lowerMessage = userMessage.toLowerCase();
-    
-    // ✅ Verificar memória primeiro (v3.0)
-    const memoryResponse = checkMemoryForContext(userMessage);
-    if (memoryResponse) return memoryResponse;
     
     // ✅ RESPOSTAS COM VARIAÇÃO - nunca repete a mesma estrutura
     const responseVariations: Record<string, string[]> = {
       'emagrecer|perder peso|peso': [
         `Entendi, ${speakerName}. A gente pode começar ajustando pequenas coisas, tipo trocar refrigerante por água saborizada ou incluir frutas no lanche. Quer que eu te ajude a montar um plano leve pra essa semana?`,
         `Legal isso! Quer perder peso? Olha só, o segredo tá na consistência, não em dieta maluca. Que tal a gente focar em trocar alimentos industrializados por comida de verdade? Topa?`,
-        `Boa pergunta! Perder peso com saúde é totalmente possível, ${speakerName}. Vamos começar pelo básico: mais água, menos açúcar, e comida caseira. Posso te dar um cardápio simples pra testar?`,
-        `Poxa, ${speakerName}, emagrecer é sobre criar hábitos, não fazer sacrifício! Vamos começar leve: troca um lanche industrializado por fruta hoje. Quer tentar?`
+        `Boa pergunta! Perder peso com saúde é totalmente possível, ${speakerName}. Vamos começar pelo básico: mais água, menos açúcar, e comida caseira. Posso te dar um cardápio simples pra testar?`
       ],
       'massa|ganhar massa|muscular|musculação|força': [
         `Show! Nesse caso, a base é proteína e constância. Pensa em ovos, peixes, frango e leguminosas como feijão e lentilha. Posso te dar umas opções de lanche pós-treino?`,
         `${speakerName}, pra ganhar massa você precisa de proteínas magras, carboidratos bons e bastante água. Um exemplo seria frango grelhado com batata-doce e salada colorida. Quer que eu monte um cardápio rápido pra isso?`,
-        `Massa muscular é meu forte! A dica é: proteína em todas as refeições. Ovos no café, frango no almoço, peixe no jantar. Quer saber as quantidades ideais pra você?`,
-        `Tô contigo nisso, ${speakerName}! Pra ganhar massa, come proteína de qualidade e não pula refeições. Bora montar um plano pra você?`
+        `Massa muscular é meu forte! A dica é: proteína em todas as refeições. Ovos no café, frango no almoço, peixe no jantar. Quer saber as quantidades ideais pra você?`
       ],
       'receita|receitas|prato|comida|refeição': [
         `Boa! Vamos de receitas então. Me conta, você curte comida mais leve ou algo mais substancial? E tem algum ingrediente que você ama?`,
@@ -432,8 +305,7 @@ const NutriAI = () => {
       'água|hidrat': [
         `${speakerName}, água é vida! Sério, bebe pelo menos 2 litros por dia. Seu corpo vai agradecer, confia. Quer dicas pra lembrar de beber mais?`,
         `Olha só, água é fundamental! Se você treina, aumenta pra uns 3 litros. E se achar sem graça, adiciona limão ou hortelã. Fica show!`,
-        `Boa! Água é essencial pra tudo: metabolismo, pele, energia... Tenta sempre ter uma garrafa por perto, ajuda demais!`,
-        `${speakerName}, beber água é básico mas muita gente esquece! Deixa uma garrafa sempre por perto, pode ser?`
+        `Boa! Água é essencial pra tudo: metabolismo, pele, energia... Tenta sempre ter uma garrafa por perto, ajuda demais!`
       ],
       'dia|hoje|data|clima': [
         `Hoje é ${new Date().toLocaleDateString('pt-BR')}! Aliás, ótimo dia pra cuidar da alimentação, né? Quer que eu te lembre de beber mais água hoje?`,
@@ -441,8 +313,7 @@ const NutriAI = () => {
       ],
       'desanim|triste|cansad|sono': [
         `Poxa, entendo... tem dias assim mesmo, ${speakerName}. Que tal a gente tentar ajustar sua alimentação pra te dar mais energia? Às vezes, um bom café da manhã muda tudo!`,
-        `Sei como é. Cansaço pode ser falta de nutrientes, sabia? Vamos revisar o que você tá comendo? Pode ser que falte ferro ou vitaminas do complexo B.`,
-        `${speakerName}, tô contigo nisso. Alimentação afeta muito nosso humor, viu? Vamos ajustar pra você ter mais disposição?`
+        `Sei como é. Cansaço pode ser falta de nutrientes, sabia? Vamos revisar o que você tá comendo? Pode ser que falte ferro ou vitaminas do complexo B.`
       ],
       'obrigad': [
         `De nada, ${speakerName}! Tamo junto nessa jornada nutricional!`,
@@ -455,27 +326,15 @@ const NutriAI = () => {
       ]
     };
 
-    // ✅ Procura resposta variada (v3.0 - com memória)
+    // ✅ Procura resposta variada
     for (const [keys, responses] of Object.entries(responseVariations)) {
       const keyList = keys.split('|');
       if (keyList.some(key => lowerMessage.includes(key))) {
         // Seleciona resposta aleatória para variação
         const randomResponse = responses[Math.floor(Math.random() * responses.length)];
         
-        // ✅ Atualiza contexto da conversa (v3.0)
-        const topic = keys.split('|')[0];
-        conversationContext.current.lastTopic = topic;
-        
-        if (topic === 'emagrecer' || topic === 'perder peso') {
-          conversationContext.current.currentObjective = 'emagrecimento';
-        } else if (topic === 'massa' || topic === 'ganhar massa') {
-          conversationContext.current.currentObjective = 'ganho de massa';
-        }
-        
-        // ✅ Salvar última refeição mencionada
-        if (lowerMessage.match(/café|almoço|jantar|lanche/)) {
-          conversationContext.current.lastMeal = lowerMessage.match(/café|almoço|jantar|lanche/)?.[0] || '';
-        }
+        // ✅ Atualiza contexto da conversa
+        conversationContext.current.lastTopic = keys.split('|')[0];
         
         return randomResponse;
       }
@@ -539,15 +398,9 @@ const NutriAI = () => {
         aiResponse = retryResponses[Math.floor(Math.random() * retryResponses.length)];
       }
     }
-    // ✅ FASE 2: CONVERSA PRINCIPAL COM CONTEXTO (v3.0)
+    // ✅ FASE 2: CONVERSA PRINCIPAL COM CONTEXTO
     else {
-      const detectedEmotion = detectEmotion(userText);
-      conversationContext.current.emotionalState = detectedEmotion;
-      
       aiResponse = generateNutritionResponse(userText, userName || firstName || 'amigo');
-      
-      // ✅ Adicionar à memória (v3.0)
-      addToMemory(userText, aiResponse, conversationContext.current.lastTopic, detectedEmotion);
     }
     
     const aiMessage = { 
@@ -557,8 +410,7 @@ const NutriAI = () => {
     };
     setConversation(prev => [...prev, aiMessage]);
     
-    // ✅ Falar com emoção ajustada (v3.0)
-    await speakText(aiResponse, conversationContext.current.emotionalState);
+    await speakText(aiResponse);
   };
 
   return (

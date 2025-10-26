@@ -4,7 +4,7 @@ import { GymCard } from "@/components/GymCard";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, Clock as ClockIcon, Target, Flame, Droplets, Zap, Plus, TrendingUp } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeSelector } from "@/components/ThemeSelector";
 import { Clock } from "@/components/Clock";
@@ -16,15 +16,6 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [userName, setUserName] = useState<string>('');
   const motivationalMessage = useMotivationalMessage();
-  const navigate = useNavigate();
-  
-  // Verifica se o usuário completou o onboarding
-  useEffect(() => {
-    const onboardingCompleted = localStorage.getItem('onboardingCompleted');
-    if (!onboardingCompleted && user) {
-      navigate('/onboarding');
-    }
-  }, [user, navigate]);
   
   useEffect(() => {
     const loadUserName = async () => {

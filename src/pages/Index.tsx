@@ -202,26 +202,3 @@ const Index = () => {
 };
 
 export default Index;
-
-/* Hide Lovable badge completely */
-a[href*="lovable.dev"], 
-
-iframe[src*="lovable.dev"],
-
-div[style*="Edit with Lovable"],
-
-.lovable-badge {
-
-  display: none !important;
-
-  opacity: 0 !important;
-
-  visibility: hidden !important;
-
-  pointer-events: none !important;
-
-  position: absolute !important;
-
-  z-index: -9999 !important;
-
-}
