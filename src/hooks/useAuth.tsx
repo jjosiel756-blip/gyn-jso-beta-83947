@@ -82,7 +82,10 @@ export function useAuth() {
           .insert(profileData);
       }
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
+      // Silently fail in production, log only in development
+      if (import.meta.env.DEV) {
+        console.error('Erro ao atualizar perfil:', error);
+      }
     }
   };
 

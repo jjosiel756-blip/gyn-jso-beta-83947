@@ -33,7 +33,6 @@ const Login = () => {
 
       if (error) throw error;
     } catch (error: any) {
-      console.error("Erro no login Google:", error);
       toast.error(error.message || "Erro ao fazer login com Google");
       setIsLoading(false);
     }

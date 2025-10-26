@@ -6,6 +6,17 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string()
+    .trim()
+    .email('Por favor, insira um endereço de email válido')
+    .max(255, 'Email muito longo'),
+  password: z.string()
+    .min(6, 'A senha deve ter no mínimo 6 caracteres')
+    .max(72, 'Senha muito longa')
+});
 
 interface AuthDialogProps {
   open: boolean;
@@ -37,7 +48,6 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
       if (error) throw error;
     } catch (error: any) {
-      console.error("Erro no login Google:", error);
       toast.error(error.message || "Erro ao fazer login com Google");
       setIsGoogleLoading(false);
     }
@@ -46,8 +56,11 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email) {
-      toast.error("Digite seu email");
+    // Validate email
+    try {
+      z.string().trim().email().parse(email);
+    } catch {
+      toast.error("Por favor, insira um email válido");
       return;
     }
 
@@ -67,7 +80,6 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       }
     } catch (error) {
       toast.error("Erro ao enviar email de recuperação");
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -76,9 +88,14 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error("Preencha todos os campos");
-      return;
+    // Validate input
+    try {
+      authSchema.parse({ email, password });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast.error(err.errors[0].message);
+        return;
+      }
     }
 
     setLoading(true);
@@ -126,7 +143,6 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       }
     } catch (error) {
       toast.error("Erro ao processar autenticação");
-      console.error(error);
     } finally {
       setLoading(false);
     }

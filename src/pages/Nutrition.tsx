@@ -72,7 +72,6 @@ const Nutrition = () => {
       const { data: session } = await supabase.auth.getSession();
       
       if (!session?.session?.user) {
-        console.log("Usuário não autenticado");
         setSavedMeals([]);
         return;
       }
@@ -88,13 +87,16 @@ const Nutrition = () => {
         .order('timestamp', { ascending: false });
       
       if (error) {
-        console.error("Erro ao carregar refeições:", error);
+        if (import.meta.env.DEV) {
+          console.error("Erro ao carregar refeições:", error);
+        }
       } else {
         setSavedMeals(data || []);
-        console.log("Refeições carregadas:", data?.length);
       }
     } catch (error) {
-      console.error("Erro ao buscar refeições:", error);
+      if (import.meta.env.DEV) {
+        console.error("Erro ao buscar refeições:", error);
+      }
     } finally {
       setIsLoadingMeals(false);
     }
@@ -131,8 +133,7 @@ const Nutrition = () => {
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(err => {
-            console.error("Erro ao iniciar vídeo:", err);
+          videoRef.current.play().catch(() => {
             toast({
               title: "Erro",
               description: "Não foi possível iniciar a visualização da câmera.",
@@ -143,8 +144,6 @@ const Nutrition = () => {
       }, 100);
       
     } catch (error) {
-      console.error("Erro ao acessar câmera:", error);
-      
       let errorMessage = "Não foi possível acessar a câmera.";
       
       if (error instanceof DOMException) {
@@ -224,23 +223,18 @@ const Nutrition = () => {
   const analyzeImage = async (imageData: string) => {
     setIsAnalyzing(true);
     try {
-      console.log("Enviando imagem para análise...");
-      
       // Chamar a edge function de análise de alimentos
       const { data: functionData, error: functionError } = await supabase.functions.invoke('analyze-food', {
         body: { imageData }
       });
 
       if (functionError) {
-        console.error("Erro na edge function:", functionError);
         throw new Error(functionError.message || "Erro ao analisar imagem");
       }
 
       if (!functionData || !functionData.success) {
         throw new Error(functionData?.error || "Resposta inválida da análise");
       }
-
-      console.log("Análise concluída:", functionData);
 
       // Formatar resultados para exibição
       const foodsList = functionData.foods
@@ -272,14 +266,12 @@ const Nutrition = () => {
           });
         
         if (saveError) {
-          console.error("Erro ao salvar refeição:", saveError);
           toast({
             title: "Análise OK, mas erro ao salvar",
             description: "A análise foi feita mas não foi possível salvar no histórico.",
             variant: "destructive",
           });
         } else {
-          console.log("✅ Refeição salva no histórico");
           // Recarregar lista de refeições
           loadTodayMeals();
         }
@@ -291,8 +283,6 @@ const Nutrition = () => {
       });
       
     } catch (error) {
-      console.error("Erro ao analisar imagem:", error);
-      
       let errorMessage = "Não foi possível analisar a imagem. Tente novamente.";
       
       if (error instanceof Error) {

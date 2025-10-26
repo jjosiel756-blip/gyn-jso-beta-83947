@@ -7,6 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Lock, Eye, EyeOff } from "lucide-react";
+import { z } from "zod";
+
+const passwordSchema = z.object({
+  password: z.string()
+    .min(6, 'A senha deve ter no mínimo 6 caracteres')
+    .max(72, 'Senha muito longa'),
+  confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"]
+});
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -32,19 +43,14 @@ export default function ResetPassword() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!password || !confirmPassword) {
-      toast.error("Preencha todos os campos");
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error("A senha deve ter no mínimo 6 caracteres");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error("As senhas não coincidem");
-      return;
+    // Validate input
+    try {
+      passwordSchema.parse({ password, confirmPassword });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast.error(err.errors[0].message);
+        return;
+      }
     }
 
     setLoading(true);
@@ -62,7 +68,6 @@ export default function ResetPassword() {
       }
     } catch (error) {
       toast.error("Erro ao alterar senha");
-      console.error(error);
     } finally {
       setLoading(false);
     }

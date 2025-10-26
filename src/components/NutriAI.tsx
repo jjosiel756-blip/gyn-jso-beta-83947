@@ -90,12 +90,10 @@ const NutriAI = () => {
       recognition.maxAlternatives = 3;
 
       recognition.onstart = () => {
-        console.log('🎤 Microfone ativo - ouvindo continuamente');
         setIsListening(true);
       };
 
       recognition.onend = () => {
-        console.log('🔇 Microfone pausado');
         setIsListening(false);
         // ✅ RECONECTAR AUTOMATICAMENTE
         if (isActive && !isSpeaking) {
@@ -104,7 +102,7 @@ const NutriAI = () => {
               try {
                 recognitionRef.current.start();
               } catch (e) {
-                console.log('Reconhecimento já ativo');
+                // Reconhecimento já ativo
               }
             }
           }, 500);
@@ -119,13 +117,11 @@ const NutriAI = () => {
           }
         }
         if (finalTranscript.trim()) {
-          console.log('👤 Usuário disse:', finalTranscript);
           handleUserMessage(finalTranscript);
         }
       };
 
       recognition.onerror = (event: any) => {
-        console.log('❌ Erro no microfone:', event.error);
         if (event.error === 'not-allowed') {
           alert('Permissão de microfone negada. Ative o microfone para conversar com o NutriAI.');
         }
@@ -263,7 +259,7 @@ const NutriAI = () => {
         try {
           recognitionRef.current.start();
         } catch (e) {
-          console.log('Reconhecimento já ativo');
+          // Reconhecimento já ativo
         }
       }, 1500);
     }
