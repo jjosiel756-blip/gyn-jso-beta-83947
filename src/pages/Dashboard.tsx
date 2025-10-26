@@ -15,6 +15,12 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [userName, setUserName] = useState<string>('');
   const motivationalMessage = useMotivationalMessage();
+  const [nutritionData, setNutritionData] = useState({
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0
+  });
   
   useEffect(() => {
     const loadUserName = async () => {
@@ -52,6 +58,39 @@ const Dashboard = () => {
     };
 
     loadUserName();
+  }, [user]);
+
+  useEffect(() => {
+    const loadTodayNutrition = async () => {
+      if (!user) return;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const { data: meals } = await supabase
+        .from('meals')
+        .select('total_calories, total_protein, total_carbs, total_fat')
+        .eq('user_id', user.id)
+        .gte('timestamp', today.toISOString())
+        .lt('timestamp', tomorrow.toISOString());
+
+      if (meals && meals.length > 0) {
+        const totals = meals.reduce((acc, meal) => ({
+          calories: acc.calories + (Number(meal.total_calories) || 0),
+          protein: acc.protein + (Number(meal.total_protein) || 0),
+          carbs: acc.carbs + (Number(meal.total_carbs) || 0),
+          fat: acc.fat + (Number(meal.total_fat) || 0)
+        }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+        setNutritionData(totals);
+      } else {
+        setNutritionData({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+      }
+    };
+
+    loadTodayNutrition();
   }, [user]);
 
   const todayStats = [
@@ -157,34 +196,36 @@ const Dashboard = () => {
           >
             <div className="space-y-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-secondary">1.640</div>
+                <div className="text-3xl font-bold text-secondary">{Math.round(nutritionData.calories)}</div>
                 <div className="text-sm text-muted-foreground">kcal consumidas</div>
-                <div className="text-xs text-green-500 mt-1">560 kcal restantes</div>
+                <div className={`text-xs mt-1 ${2200 - nutritionData.calories >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {Math.abs(Math.round(2200 - nutritionData.calories))} kcal {2200 - nutritionData.calories >= 0 ? 'restantes' : 'acima'}
+                </div>
               </div>
               
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Carboidratos</span>
-                    <span>180g / 220g</span>
+                    <span>{Math.round(nutritionData.carbs)}g / 220g</span>
                   </div>
-                  <Progress value={82} className="h-1" />
+                  <Progress value={Math.min((nutritionData.carbs / 220) * 100, 100)} className="h-1" />
                 </div>
                 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Proteínas</span>
-                    <span>85g / 120g</span>
+                    <span>{Math.round(nutritionData.protein)}g / 120g</span>
                   </div>
-                  <Progress value={71} className="h-1" />
+                  <Progress value={Math.min((nutritionData.protein / 120) * 100, 100)} className="h-1" />
                 </div>
                 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Gorduras</span>
-                    <span>45g / 60g</span>
+                    <span>{Math.round(nutritionData.fat)}g / 60g</span>
                   </div>
-                  <Progress value={75} className="h-1" />
+                  <Progress value={Math.min((nutritionData.fat / 60) * 100, 100)} className="h-1" />
                 </div>
               </div>
               
