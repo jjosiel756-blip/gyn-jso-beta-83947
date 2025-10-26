@@ -7,7 +7,6 @@ import { Calendar, Clock as ClockIcon, Target, Flame, Droplets, Zap, Plus, Trend
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeSelector } from "@/components/ThemeSelector";
-import { Clock } from "@/components/Clock";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMotivationalMessage } from "@/hooks/useMotivationalMessage";
@@ -76,22 +75,19 @@ const Dashboard = () => {
             </div>
             <p className="motivational-text text-primary font-medium">{motivationalMessage}</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Clock />
-            <div className="flex gap-2">
-              <Link to="/workouts">
-                <Button variant="fitness" size="sm">
-                  <Plus className="w-4 h-4" />
-                  Novo Treino
-                </Button>
-              </Link>
-              <Link to="/nutrition">
-                <Button variant="nutrition" size="sm">
-                  <Plus className="w-4 h-4" />
-                  Analisar Refeição
-                </Button>
-              </Link>
-            </div>
+          <div className="flex gap-2">
+            <Link to="/workouts">
+              <Button variant="fitness" size="sm">
+                <Plus className="w-4 h-4" />
+                Novo Treino
+              </Button>
+            </Link>
+            <Link to="/nutrition">
+              <Button variant="nutrition" size="sm">
+                <Plus className="w-4 h-4" />
+                Analisar Refeição
+              </Button>
+            </Link>
           </div>
         </div>
 
