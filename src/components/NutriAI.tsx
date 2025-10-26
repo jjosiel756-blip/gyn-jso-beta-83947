@@ -346,129 +346,63 @@ const NutriAI = () => {
     return null;
   };
 
-  // ✅ DETECTAR INTENÇÃO (v3.0 - pergunta, comentário ou brincadeira)
-  const detectIntent = (message: string): 'question' | 'comment' | 'joke' | 'gratitude' => {
-    const lowerMsg = message.toLowerCase();
-    
-    // Perguntas
-    if (lowerMsg.includes('?') || lowerMsg.match(/^(como|o que|onde|quando|por que|porque|qual|quais|pode|posso|consigo)/)) {
-      return 'question';
-    }
-    
-    // Gratidão
-    if (lowerMsg.match(/obrigad|valeu|thanks|grac/)) {
-      return 'gratitude';
-    }
-    
-    // Brincadeira / humor
-    if (lowerMsg.match(/haha|kkk|rsrs|pizza.*todo dia|sorvete.*dieta|cerveja.*proteína|hamburguer.*saude/)) {
-      return 'joke';
-    }
-    
-    // Padrão: comentário
-    return 'comment';
-  };
-
-  // ✅ RESPOSTAS CARISMÁTICAS COM DETECÇÃO DE INTENÇÃO (v3.0)
+  // ✅ RESPOSTAS CARISMÁTICAS COM VARIAÇÃO E EMOÇÃO (v3.0)
   const generateNutritionResponse = (userMessage: string, speakerName: string) => {
     const lowerMessage = userMessage.toLowerCase();
-    const intent = detectIntent(userMessage);
     
     // ✅ Verificar memória primeiro (v3.0)
     const memoryResponse = checkMemoryForContext(userMessage);
     if (memoryResponse) return memoryResponse;
     
-    // ✅ RESPOSTAS COM VARIAÇÃO E CONTEXTO - nunca repete a mesma estrutura
+    // ✅ RESPOSTAS COM VARIAÇÃO - nunca repete a mesma estrutura
     const responseVariations: Record<string, string[]> = {
-      // Comidas específicas - detecta se é pergunta ou comentário
-      'cachorro.?quente|hot.?dog': intent === 'question' ? [
-        `Hmm, cachorro-quente é bom, mas não é dos mais saudáveis. Quer que eu te ensine uma versão fit?`,
-        `Olha, dá pra adaptar sim! Pão integral, frango desfiado e um molhinho caseiro já deixam top.`,
-        `Se for de vez em quando, sem problema. O segredo é equilíbrio, ${speakerName}.`
-      ] : [
-        `Opa, cachorro-quente! Gosta né? Bom, dá pra fazer versões mais saudáveis. Quer dicas?`,
-        `Entendi! Olha, não precisa cortar tudo, só equilibrar. Quer que eu te mostre como?`
-      ],
-      
-      'pizza': intent === 'question' || intent === 'joke' ? [
-        `Haha, pizza todo dia? Só se for pizza fit! 😄 Quer que eu te passe uma receita saudável?`,
-        `Pizza todo dia é tentador! Mas bora equilibrar com algo leve no dia seguinte?`,
-        `Depende... se for pizza de berinjela ou integral com vegetais, talvez eu feche os olhos dessa vez 😂`
-      ] : [
-        `Pizza! Quem não ama né? Mas olha, o segredo é não exagerar. Quer dicas de pizza fit?`,
-        `Boa! Pizza pode sim, mas com moderação. Que tal versões mais leves?`
-      ],
-      
       'emagrecer|perder peso|peso': [
         `Entendi, ${speakerName}. A gente pode começar ajustando pequenas coisas, tipo trocar refrigerante por água saborizada ou incluir frutas no lanche. Quer que eu te ajude a montar um plano leve pra essa semana?`,
         `Legal isso! Quer perder peso? Olha só, o segredo tá na consistência, não em dieta maluca. Que tal a gente focar em trocar alimentos industrializados por comida de verdade? Topa?`,
         `Boa pergunta! Perder peso com saúde é totalmente possível, ${speakerName}. Vamos começar pelo básico: mais água, menos açúcar, e comida caseira. Posso te dar um cardápio simples pra testar?`,
         `Poxa, ${speakerName}, emagrecer é sobre criar hábitos, não fazer sacrifício! Vamos começar leve: troca um lanche industrializado por fruta hoje. Quer tentar?`
       ],
-      
       'massa|ganhar massa|muscular|musculação|força': [
         `Show! Nesse caso, a base é proteína e constância. Pensa em ovos, peixes, frango e leguminosas como feijão e lentilha. Posso te dar umas opções de lanche pós-treino?`,
         `${speakerName}, pra ganhar massa você precisa de proteínas magras, carboidratos bons e bastante água. Um exemplo seria frango grelhado com batata-doce e salada colorida. Quer que eu monte um cardápio rápido pra isso?`,
         `Massa muscular é meu forte! A dica é: proteína em todas as refeições. Ovos no café, frango no almoço, peixe no jantar. Quer saber as quantidades ideais pra você?`,
-        `Tô contigo nisso, ${speakerName}! Pra ganhar massa, come proteína de qualidade e não pula refeições. Bora montar um plano pra você?`,
-        `Beleza! Arroz integral, ovos e legumes são uma ótima base pra ganhar força.`,
-        `Tenta frango grelhado com batata-doce e uma fruta. Energia garantida!`,
-        `Uma boa refeição pra força? Ovos, quinoa e um suco natural.`
+        `Tô contigo nisso, ${speakerName}! Pra ganhar massa, come proteína de qualidade e não pula refeições. Bora montar um plano pra você?`
       ],
-      
       'receita|receitas|prato|comida|refeição': [
         `Boa! Vamos de receitas então. Me conta, você curte comida mais leve ou algo mais substancial? E tem algum ingrediente que você ama?`,
         `Olha só, ${speakerName}, tenho várias receitas fit e gostosas! Quer algo rápido pro dia a dia ou uma receita especial pra fim de semana?`,
         `Receitas é comigo mesmo! Que tal a gente montar algo com ingredientes que você já tem em casa? Me fala o que tem na geladeira!`
       ],
-      
       'água|hidrat': [
         `${speakerName}, água é vida! Sério, bebe pelo menos 2 litros por dia. Seu corpo vai agradecer, confia. Quer dicas pra lembrar de beber mais?`,
         `Olha só, água é fundamental! Se você treina, aumenta pra uns 3 litros. E se achar sem graça, adiciona limão ou hortelã. Fica show!`,
         `Boa! Água é essencial pra tudo: metabolismo, pele, energia... Tenta sempre ter uma garrafa por perto, ajuda demais!`,
         `${speakerName}, beber água é básico mas muita gente esquece! Deixa uma garrafa sempre por perto, pode ser?`
       ],
-      
-      'dia|hoje|data': [
+      'dia|hoje|data|clima': [
         `Hoje é ${new Date().toLocaleDateString('pt-BR')}! Aliás, ótimo dia pra cuidar da alimentação, né? Quer que eu te lembre de beber mais água hoje?`,
-        `Olha só, hoje tá perfeito pra começar hábitos saudáveis! Me conta, ${speakerName}, como foi sua alimentação até agora hoje?`,
-        `Hoje é ${new Date().toLocaleDateString('pt-BR')}. Já pensou no que vai comer de bom hoje?`
+        `Olha só, hoje tá perfeito pra começar hábitos saudáveis! Me conta, ${speakerName}, como foi sua alimentação até agora hoje?`
       ],
-      
       'desanim|triste|cansad|sono': [
         `Poxa, entendo... tem dias assim mesmo, ${speakerName}. Que tal a gente tentar ajustar sua alimentação pra te dar mais energia? Às vezes, um bom café da manhã muda tudo!`,
         `Sei como é. Cansaço pode ser falta de nutrientes, sabia? Vamos revisar o que você tá comendo? Pode ser que falte ferro ou vitaminas do complexo B.`,
-        `${speakerName}, tô contigo nisso. Alimentação afeta muito nosso humor, viu? Vamos ajustar pra você ter mais disposição?`,
-        `Então vamos pegar leve hoje. Um lanche leve pode te deixar mais disposto, ${speakerName}.`,
-        `Que tal uma banana com aveia e mel pra dar um up? Pode ajudar com essa energia!`
+        `${speakerName}, tô contigo nisso. Alimentação afeta muito nosso humor, viu? Vamos ajustar pra você ter mais disposição?`
       ],
-      
-      'obrigad|valeu': [
+      'obrigad': [
         `De nada, ${speakerName}! Tamo junto nessa jornada nutricional!`,
         `Imagina! Qualquer coisa, só chamar. Estou aqui pra te ajudar sempre!`,
         `Por nada! Adorei nossa conversa, viu? Sempre que precisar, é só falar!`
       ],
-      
-      'você|bot|robo|ia|come': [
-        `Haha, se eu pudesse, comeria do jeito certo, viu? Mas posso te ajudar a deixar suas refeições mais equilibradas. Quer que eu veja o que você comeu hoje?`,
-        `Olha, sou uma IA sim, mas tô aqui pra te ajudar de verdade com nutrição! Então, bora focar no seu bem-estar?`,
-        `Não exatamente... mas se eu pudesse, com certeza experimentaria sua comida saudável! Me conta, ${speakerName}, o que você costuma preparar?`
-      ],
-      
-      'pressa|rápido|rapido': [
-        `Boa pergunta! Pega algo simples e funcional, tipo iogurte natural com aveia e frutas. Rapidinho e te dá energia boa. Quer que eu te passe mais ideias rápidas?`,
-        `Algo rápido? Banana com pasta de amendoim, ou pão integral com ovo mexido. Prático e nutritivo!`
+      'você|bot|robo|ia': [
+        `Haha, não exatamente... mas se eu pudesse, com certeza experimentaria sua comida saudável! Me conta, ${speakerName}, o que você costuma preparar?`,
+        `Olha, sou uma IA sim, mas tô aqui pra te ajudar de verdade com nutrição! Então, bora focar no seu bem-estar?`
       ]
     };
 
-    // ✅ Procura resposta variada (v3.0 - com memória e detecção de intenção)
+    // ✅ Procura resposta variada (v3.0 - com memória)
     for (const [keys, responses] of Object.entries(responseVariations)) {
       const keyList = keys.split('|');
-      if (keyList.some(key => {
-        // Usa regex para permitir palavras parciais e espaços
-        const regex = new RegExp(key, 'i');
-        return regex.test(lowerMessage);
-      })) {
+      if (keyList.some(key => lowerMessage.includes(key))) {
         // Seleciona resposta aleatória para variação
         const randomResponse = responses[Math.floor(Math.random() * responses.length)];
         
@@ -483,40 +417,20 @@ const NutriAI = () => {
         }
         
         // ✅ Salvar última refeição mencionada
-        if (lowerMessage.match(/café|almoço|jantar|lanche|cachorro.?quente|pizza|hamburguer|hambúrguer/)) {
-          conversationContext.current.lastMeal = lowerMessage.match(/café|almoço|jantar|lanche|cachorro.?quente|pizza|hamburguer|hambúrguer/)?.[0] || '';
+        if (lowerMessage.match(/café|almoço|jantar|lanche/)) {
+          conversationContext.current.lastMeal = lowerMessage.match(/café|almoço|jantar|lanche/)?.[0] || '';
         }
         
         return randomResponse;
       }
     }
     
-    // ✅ Respostas genéricas variadas baseadas na intenção
-    if (intent === 'question') {
-      const questionResponses = [
-        `Hmm, acho que não entendi muito bem, pode me explicar melhor, ${speakerName}?`,
-        `Interessante! Pode me contar um pouco mais pra eu te ajudar direito?`,
-        `Boa pergunta! Me dá mais detalhes do que você tá pensando?`,
-        `Olha, sobre nutrição posso te ajudar com receitas, dicas e planos alimentares. O que te interessa mais?`
-      ];
-      return questionResponses[Math.floor(Math.random() * questionResponses.length)];
-    }
-    
-    if (intent === 'joke') {
-      const jokeResponses = [
-        `Haha, adorei! 😄 Mas falando sério, ${speakerName}, vamos manter o equilíbrio, combinado?`,
-        `Kkk boa essa! Mas brincadeiras à parte, posso te ajudar com algo sobre nutrição?`,
-        `Rsrs gostei! Bom, voltando ao assunto, quer falar sobre alimentação saudável?`
-      ];
-      return jokeResponses[Math.floor(Math.random() * jokeResponses.length)];
-    }
-    
-    // Comentário ou genérico
+    // ✅ Respostas genéricas variadas para manter naturalidade
     const genericResponses = [
       `Interessante, ${speakerName}! Sobre nutrição, posso te ajudar com receitas, cálculos ou dicas personalizadas. O que te interessa mais?`,
       `Legal isso! Me conta mais, ${speakerName}. Como posso te ajudar com alimentação hoje?`,
       `Olha só, ${speakerName}, adorei sua curiosidade! Quer falar sobre dieta, receitas ou dicas gerais de saúde?`,
-      `Entendi! Então me fala: quer ajuda com que aspecto da alimentação?`
+      `Boa pergunta! Vamos explorar isso juntos, ${speakerName}. Me dá mais detalhes do que você tá pensando?`
     ];
     
     return genericResponses[Math.floor(Math.random() * genericResponses.length)];
