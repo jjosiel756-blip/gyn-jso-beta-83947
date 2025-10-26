@@ -9,47 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import NutriAI from "@/components/NutriAI";
 
-const todayMeals = [
-  {
-    id: 1,
-    name: "Café da Manhã",
-    time: "08:30",
-    foods: ["Ovos mexidos (2 unidades)", "Pão integral (2 fatias)", "Abacate (1/2 unidade)"],
-    calories: 420,
-    protein: 28,
-    carbs: 35,
-    fat: 22,
-    image: "🍳"
-  },
-  {
-    id: 2,
-    name: "Lanche da Manhã",
-    time: "10:45",
-    foods: ["Iogurte grego natural", "Granola (30g)", "Morango (100g)"],
-    calories: 280,
-    protein: 18,
-    carbs: 32,
-    fat: 8,
-    image: "🥛"
-  },
-  {
-    id: 3,
-    name: "Almoço",
-    time: "13:00",
-    foods: ["Frango grelhado (150g)", "Arroz integral (100g)", "Brócolis refogado", "Salada verde"],
-    calories: 520,
-    protein: 45,
-    carbs: 48,
-    fat: 12,
-    image: "🍽️"
-  }
-];
-
 const nutritionGoals = {
-  calories: { current: 1220, target: 2200, unit: "kcal" },
-  protein: { current: 91, target: 120, unit: "g" },
-  carbs: { current: 115, target: 220, unit: "g" },
-  fat: { current: 42, target: 60, unit: "g" }
+  calories: { target: 2200, unit: "kcal" },
+  protein: { target: 120, unit: "g" },
+  carbs: { target: 220, unit: "g" },
+  fat: { target: 60, unit: "g" }
 };
 
 const Nutrition = () => {
@@ -311,12 +275,24 @@ const Nutrition = () => {
     setIsAnalyzing(false);
   };
 
+  // Calcular totais das refeições do dia
+  const calculateDailyTotals = () => {
+    return savedMeals.reduce((totals, meal) => ({
+      calories: totals.calories + (Number(meal.total_calories) || 0),
+      protein: totals.protein + (Number(meal.total_protein) || 0),
+      carbs: totals.carbs + (Number(meal.total_carbs) || 0),
+      fat: totals.fat + (Number(meal.total_fat) || 0)
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  };
+
+  const dailyTotals = calculateDailyTotals();
+
   const getProgressPercentage = (current: number, target: number) => {
     return Math.min((current / target) * 100, 100);
   };
 
   const getRemainingCalories = () => {
-    return nutritionGoals.calories.target - nutritionGoals.calories.current;
+    return nutritionGoals.calories.target - dailyTotals.calories;
   };
 
   return (
@@ -396,13 +372,13 @@ const Nutrition = () => {
               {/* Calories Progress */}
               <div className="text-center">
                 <div className="text-4xl font-bold text-secondary mb-2">
-                  {nutritionGoals.calories.current}
+                  {Math.round(dailyTotals.calories)}
                 </div>
                 <div className="text-muted-foreground">
                   de {nutritionGoals.calories.target} kcal
                 </div>
                 <Progress 
-                  value={getProgressPercentage(nutritionGoals.calories.current, nutritionGoals.calories.target)} 
+                  value={getProgressPercentage(dailyTotals.calories, nutritionGoals.calories.target)} 
                   className="mt-4 h-3"
                 />
               </div>
@@ -411,11 +387,11 @@ const Nutrition = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-4 rounded-lg bg-gradient-nutrition-subtle">
                   <div className="text-xl font-bold text-secondary">
-                    {nutritionGoals.protein.current}g
+                    {Math.round(dailyTotals.protein)}g
                   </div>
                   <div className="text-sm text-muted-foreground mb-2">Proteínas</div>
                   <Progress 
-                    value={getProgressPercentage(nutritionGoals.protein.current, nutritionGoals.protein.target)} 
+                    value={getProgressPercentage(dailyTotals.protein, nutritionGoals.protein.target)} 
                     className="h-1"
                   />
                   <div className="text-xs text-muted-foreground mt-1">
@@ -425,11 +401,11 @@ const Nutrition = () => {
 
                 <div className="text-center p-4 rounded-lg bg-gradient-nutrition-subtle">
                   <div className="text-xl font-bold text-secondary">
-                    {nutritionGoals.carbs.current}g
+                    {Math.round(dailyTotals.carbs)}g
                   </div>
                   <div className="text-sm text-muted-foreground mb-2">Carboidratos</div>
                   <Progress 
-                    value={getProgressPercentage(nutritionGoals.carbs.current, nutritionGoals.carbs.target)} 
+                    value={getProgressPercentage(dailyTotals.carbs, nutritionGoals.carbs.target)} 
                     className="h-1"
                   />
                   <div className="text-xs text-muted-foreground mt-1">
@@ -439,11 +415,11 @@ const Nutrition = () => {
 
                 <div className="text-center p-4 rounded-lg bg-gradient-nutrition-subtle">
                   <div className="text-xl font-bold text-secondary">
-                    {nutritionGoals.fat.current}g
+                    {Math.round(dailyTotals.fat)}g
                   </div>
                   <div className="text-sm text-muted-foreground mb-2">Gorduras</div>
                   <Progress 
-                    value={getProgressPercentage(nutritionGoals.fat.current, nutritionGoals.fat.target)} 
+                    value={getProgressPercentage(dailyTotals.fat, nutritionGoals.fat.target)} 
                     className="h-1"
                   />
                   <div className="text-xs text-muted-foreground mt-1">
