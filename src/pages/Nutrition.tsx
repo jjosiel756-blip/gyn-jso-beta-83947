@@ -9,48 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import NutriAI from "@/components/NutriAI";
 
-const todayMeals = [
-  {
-    id: 1,
-    name: "Café da Manhã",
-    time: "08:30",
-    foods: ["Ovos mexidos (2 unidades)", "Pão integral (2 fatias)", "Abacate (1/2 unidade)"],
-    calories: 420,
-    protein: 28,
-    carbs: 35,
-    fat: 22,
-    image: "🍳"
-  },
-  {
-    id: 2,
-    name: "Lanche da Manhã",
-    time: "10:45",
-    foods: ["Iogurte grego natural", "Granola (30g)", "Morango (100g)"],
-    calories: 280,
-    protein: 18,
-    carbs: 32,
-    fat: 8,
-    image: "🥛"
-  },
-  {
-    id: 3,
-    name: "Almoço",
-    time: "13:00",
-    foods: ["Frango grelhado (150g)", "Arroz integral (100g)", "Brócolis refogado", "Salada verde"],
-    calories: 520,
-    protein: 45,
-    carbs: 48,
-    fat: 12,
-    image: "🍽️"
-  }
-];
-
-const nutritionGoals = {
-  calories: { current: 1220, target: 2200, unit: "kcal" },
-  protein: { current: 91, target: 120, unit: "g" },
-  carbs: { current: 115, target: 220, unit: "g" },
-  fat: { current: 42, target: 60, unit: "g" }
-};
+// ✅ DADOS DINÂMICOS - Calculados a partir das refeições do usuário
+// Removidos dados estáticos para iniciar zerado na primeira experiência
 
 const Nutrition = () => {
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
@@ -60,10 +20,50 @@ const Nutrition = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [savedMeals, setSavedMeals] = useState<any[]>([]);
   const [isLoadingMeals, setIsLoadingMeals] = useState(false);
+  
+  // ✅ METAS NUTRICIONAIS - valores target fixos
+  const nutritionTargets = {
+    calories: 2200,
+    protein: 120,
+    carbs: 220,
+    fat: 60
+  };
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  // ✅ CALCULAR TOTAIS DO DIA a partir das refeições salvas
+  const calculateDailyTotals = () => {
+    if (savedMeals.length === 0) {
+      return {
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0
+      };
+    }
+    
+    return savedMeals.reduce((totals, meal) => {
+      return {
+        calories: totals.calories + (Number(meal.total_calories) || 0),
+        protein: totals.protein + (Number(meal.total_protein) || 0),
+        carbs: totals.carbs + (Number(meal.total_carbs) || 0),
+        fat: totals.fat + (Number(meal.total_fat) || 0)
+      };
+    }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  };
+  
+  const dailyTotals = calculateDailyTotals();
+  
+  // ✅ OBJETIVOS NUTRICIONAIS com valores atuais calculados
+  const nutritionGoals = {
+    calories: { current: Math.round(dailyTotals.calories), target: nutritionTargets.calories, unit: "kcal" },
+    protein: { current: Math.round(dailyTotals.protein), target: nutritionTargets.protein, unit: "g" },
+    carbs: { current: Math.round(dailyTotals.carbs), target: nutritionTargets.carbs, unit: "g" },
+    fat: { current: Math.round(dailyTotals.fat), target: nutritionTargets.fat, unit: "g" }
+  };
   
   // Carregar refeições salvas
   const loadTodayMeals = async () => {
