@@ -1,1 +1,4 @@
 project_id = "prileztkuamxebeorzjd"
+
+[functions.analyze-food]
+verify_jwt = true
