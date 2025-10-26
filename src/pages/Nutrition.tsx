@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import NutriAI from "@/components/NutriAI";
+import { NutriAIVoice } from "@/components/NutriAIVoice";
 
 const todayMeals = [
   {
@@ -705,6 +706,7 @@ const Nutrition = () => {
         )}
       </div>
       <NutriAI />
+      <NutriAIVoice />
     </Layout>
   );
 };
