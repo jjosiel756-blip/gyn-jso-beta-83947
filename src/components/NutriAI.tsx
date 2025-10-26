@@ -164,8 +164,84 @@ const NutriAI = () => {
     }
   }, [isActive, isSpeaking]);
 
-  // ✅ FALA CARISMÁTICA COM PAUSAS E EMOÇÃO (v3.0 - com micro pausas)
-  const speakText = (text: string, emotion: string = 'neutral') => {
+  // ✅ FALA NATURAL COM ELEVENLABS TTS (v4.0 - voz neural humanizada)
+  const speakText = async (text: string, emotion: string = 'neutral') => {
+    try {
+      setIsSpeaking(true);
+      console.log('🔊 Gerando voz natural com ElevenLabs...');
+      
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+
+      // ✅ PAUSAS NATURAIS COM EXPRESSÕES HUMANAS
+      const naturalText = text
+        .replace(/\.\.\./g, '... ')   // Pausas reflexivas
+        .replace(/!/g, '! ')          // Ênfase com pausa
+        .replace(/\?/g, '? ')          // Pergunta com pausa
+        .replace(/,/g, ', ')           // Micro pausas
+        .replace(/\bhm+\b/gi, 'hmm, ') // Expressões humanas
+        .replace(/\b(olha|sabe|então|poxa|legal)\b/gi, '$1, '); // Pausas em conectivos
+
+      // Chamar Edge Function com ElevenLabs
+      const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
+        body: { 
+          text: naturalText, 
+          gender: userGender,
+          emotion: emotion
+        }
+      });
+
+      if (error) {
+        console.error('❌ Erro ao gerar áudio:', error);
+        // Fallback para voz do navegador
+        await fallbackBrowserTTS(text, emotion);
+        return;
+      }
+
+      if (!data?.audioContent) {
+        throw new Error('Nenhum áudio retornado');
+      }
+
+      // Converter base64 para áudio e reproduzir
+      const audioBlob = base64ToBlob(data.audioContent, 'audio/mpeg');
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+
+      audio.onended = () => {
+        console.log('🔇 NutriAI terminou de falar');
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        
+        if (isActive && recognitionRef.current) {
+          setTimeout(() => {
+            try {
+              recognitionRef.current.start();
+            } catch (e) {
+              console.log('Reconhecimento já ativo');
+            }
+          }, 500);
+        }
+      };
+
+      audio.onerror = (e) => {
+        console.error('❌ Erro ao reproduzir áudio:', e);
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      await audio.play();
+
+    } catch (error) {
+      console.error('❌ Erro no TTS:', error);
+      setIsSpeaking(false);
+      // Fallback para voz do navegador em caso de erro
+      await fallbackBrowserTTS(text, emotion);
+    }
+  };
+
+  // ✅ FALLBACK: Voz do navegador caso ElevenLabs falhe
+  const fallbackBrowserTTS = (text: string, emotion: string = 'neutral') => {
     return new Promise<void>((resolve) => {
       if (!('speechSynthesis' in window)) {
         resolve();
@@ -173,51 +249,22 @@ const NutriAI = () => {
       }
 
       window.speechSynthesis.cancel();
-      
       const utterance = new SpeechSynthesisUtterance();
       
-      // ✅ CONFIGURAÇÕES PARA VOZ CARISMÁTICA E ENVOLVENTE COM EMOÇÃO
       const voiceSettings = getVoiceSettings(emotion);
       utterance.rate = voiceSettings.rate;
       utterance.pitch = voiceSettings.pitch;
       utterance.volume = voiceSettings.volume;
       utterance.lang = 'pt-BR';
-      
-      // ✅ PAUSAS NATURAIS COM MICRO VARIAÇÕES (v3.0)
-      const naturalText = text
-        .replace(/\.\.\./g, '... ')  // Pausas reflexivas
-        .replace(/!/g, '! ')         // Ênfase com pausa
-        .replace(/\?/g, '? ')         // Pergunta com pausa
-        .replace(/,/g, ', ')          // Micro pausas em vírgulas (0.3s)
-        .replace(/\./g, '. ');        // Pausa entre frases (0.5s)
-      
-      utterance.text = naturalText;
+      utterance.text = text;
 
-      // ✅ TENTAR ENCONTRAR VOZES NATIVAS BRASILEIRAS
       const voices = window.speechSynthesis.getVoices();
-      const ptVoice = voices.find(voice => 
-        voice.lang.includes('pt') && 
-        ((userGender === 'male' && voice.name.toLowerCase().includes('male')) ||
-         (userGender === 'female' && voice.name.toLowerCase().includes('female')))
-      );
-
-      if (ptVoice) {
-        utterance.voice = ptVoice;
-      }
-
-      utterance.onstart = () => {
-        console.log('🔊 NutriAI falando...');
-        setIsSpeaking(true);
-        if (recognitionRef.current) {
-          recognitionRef.current.stop();
-        }
-      };
+      const ptVoice = voices.find(voice => voice.lang.includes('pt'));
+      if (ptVoice) utterance.voice = ptVoice;
 
       utterance.onend = () => {
-        console.log('🔇 NutriAI terminou de falar');
         setIsSpeaking(false);
         if (isActive && recognitionRef.current) {
-          // ✅ Pausa de 0.5s antes de reativar microfone (v3.0)
           setTimeout(() => {
             try {
               recognitionRef.current.start();
@@ -229,17 +276,26 @@ const NutriAI = () => {
         resolve();
       };
 
-      utterance.onerror = (event) => {
-        console.error('❌ Erro na fala:', event);
+      utterance.onerror = () => {
         setIsSpeaking(false);
         resolve();
       };
 
-      // ✅ FALA COM PAUSA INICIAL PARA SOAR NATURAL
       setTimeout(() => {
         window.speechSynthesis.speak(utterance);
       }, 300);
     });
+  };
+
+  // ✅ CONVERTER BASE64 PARA BLOB
+  const base64ToBlob = (base64: string, mimeType: string): Blob => {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
   };
 
   // ✅ EXTRAIR NOME DA FALA DO USUÁRIO
